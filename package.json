@@ -1,0 +1,34 @@
+{
+    "name": "cvn-advanced",
+    "version": "1.0.0",
+    "description": "Listens for, filters and transports activity on a countervandalism channel",
+    "keywords": [
+        "wikia",
+        "countervandalism",
+        "cvn"
+    ],
+    "license": "CC-BY-SA-4.0",
+    "author": {
+        "name": "KockaAdmiralac",
+        "email": "1405223@gmail.com",
+        "url": "https://github.com/KockaAdmiralac"
+    },
+    "contributors": [],
+    "main": "main.js",
+    "scripts": {
+        "start": "node main.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/KockaAdmiralac/CVNAdvanced.git"
+    },
+    "dependencies": {
+        "request-promise-native": ">=1.0.0",
+        "request": "^2.34",
+        "irc": ">=0.5.2",
+        "nickserv": "0.4.4"
+    },
+    "engines": {
+        "node": ">=0.12.0"
+    }
+}

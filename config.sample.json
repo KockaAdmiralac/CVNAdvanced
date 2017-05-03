@@ -1,0 +1,24 @@
+{
+    "server": "chat.freenode.net",
+    "nick": "MyBot",
+    "user": "countervandalism",
+    "name": "CVNAdvanced testing bot",
+    "channel": "cvn-wikia",
+    "password": "sekrit IRC password",
+    "filters": {
+        "example": {
+            "name": "example"
+        }
+    },
+    "transports": {
+        "example": {
+            "name": "discord",
+            "id": "012345678910111213",
+            "token": "STZYKgOEQNfmgIWvUilAnoiVeiHCX2jFL6xWgFDE_7fmwXNotSRP40jK5_CSESbyN1Ep",
+            "format": "example"
+        }
+    },
+    "map": {
+        "example": "example"
+    }
+}
