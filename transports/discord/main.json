@@ -6,7 +6,7 @@
             "website": "https://github.com/KockaAdmiralac"
         }
     ],
-    "name": "Example",
-    "description": "Example filter",
+    "name": "Discord",
+    "description": "Transports data to [Discord](https://discordapp.com)",
     "version": [1, 0, 0]
 }

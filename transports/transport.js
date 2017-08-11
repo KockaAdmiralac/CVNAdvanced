@@ -20,7 +20,8 @@ class Transport {
         if(!config.format) {
             main.hook('parameterError', 'Transport.constructor');
         }
-        this._format = main.format(config.format);
+        const Format = main.format(config.format);
+        this._format = new Format();
     }
     /**
      * Transfers the message

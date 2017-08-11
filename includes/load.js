@@ -18,7 +18,13 @@ const fs = require('fs'),
 const RESOURCES = [
     'filter',
     'transport',
-    'format'
+    'format',
+    'extension'
+], REQUIRED_PARAMS = [
+    'authors',
+    'description',
+    'name',
+    'version'
 ];
 
 /**
@@ -44,20 +50,17 @@ class Loader {
             this._config,
             this._filters,
             this._transports,
-            this._formats
-        ));
+            this._formats,
+            this._extensions
+        )).catch(e => main.error(e));
     }
     /**
-     * Loads configuration and initalizes a Promise object
+     * Loads configuration
      * @method _loadConfig
      * @private
      */
     _loadConfig() {
-        try {
-            this._config = require('../config.json');
-        } catch(e) {
-            main.error(e);
-        }
+        util.safeRun(() => this._config = require('../config.json'), this);
     }
     /**
      * Returns a Promise for reading a directory
@@ -82,47 +85,28 @@ class Loader {
      * Loads a specified resource
      * @method _loadResource
      * @private
-     * @param {String} resource Resource to load
+     * @param {String} name Resource to load
+     * @todo Fix extension loading inconsistencies
      */
-    _loadResource(resource) {
-        this[`_${resource}s`] = {};
-        this._promises.push(this._readDir(`${resource}s`)
-            .then((function(files) {
-                files.filter(f => f !== `${resource}.js`).forEach(
-                    this[`_load${util.cap(resource)}s`],
-                    this
-                );
-            }).bind(this)));
-    }
-    /**
-     * Handles filter loading
-     * @method _loadFilters
-     * @private
-     * @param {String} name Filter name
-     */
-    _loadFilters(name) {
-        const filter = require(`../filters/${name}/main.js`);
-        filter.prototype.data = require(`../filters/${name}/main.json`);
-        this._filters[name] = filter;
-    }
-    /**
-     * Handles transport loading
-     * @method _loadTransports
-     * @private
-     * @param {String} name Transport name
-     */
-    _loadTransports(name) {
-        this._transports[name] = require(`../transports/${name}/main.js`);
-    }
-    /**
-     * Handles format loading
-     * @method _loadFormats
-     * @private
-     * @param {String} name Format name
-     */
-    _loadFormats(name) {
-        const Format = require(`../formats/${name}/main.js`);
-        this._formats[name] = new Format();
+    _loadResource(name) {
+        this[`_${name}s`] = {};
+        const dir = `../${name}s`;
+        this._promises.push(this._readDir(`${name}s`).then((function(files) {
+            files.filter(f => f !== `${name}.js`).forEach(function(file) {
+                const res = require(`${dir}/${file}/main.js`),
+                      data = require(`${dir}/${file}/main.json`);
+                if(typeof data !== 'object') {
+                    throw new Error(`Loading data for \`${file}\` failed`);
+                }
+                REQUIRED_PARAMS.forEach(function(param) {
+                    if(!data[param]) {
+                        main.warn(`Incomplete data in \`${file}\``);
+                    }
+                });
+                res.prototype.data = data;
+                this[`_${name}s`][file] = res;                
+            }, this);
+        }).bind(this)));
     }
 }
 

@@ -6,7 +6,7 @@
             "website": "https://github.com/KockaAdmiralac"
         }
     ],
-    "name": "Example",
-    "description": "Example filter",
+    "name": "Discussions",
+    "description": "Filter that filters Discussions content",
     "version": [1, 0, 0]
 }

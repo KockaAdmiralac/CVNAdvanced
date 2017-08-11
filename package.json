@@ -1,7 +1,7 @@
 {
     "name": "cvn-advanced",
-    "version": "1.0.0",
-    "description": "Listens for, filters and transports activity on a countervandalism channel",
+    "version": "1.1.0",
+    "description": "Listens for, filters and transports activity from Wikia countervandalism channels",
     "keywords": [
         "wikia",
         "countervandalism",
@@ -25,10 +25,6 @@
     "dependencies": {
         "request-promise-native": ">=1.0.0",
         "request": "^2.34",
-        "irc": ">=0.5.2",
-        "nickserv": "0.4.4"
-    },
-    "engines": {
-        "node": ">=0.12.0"
+        "irc": ">=0.5.2"
     }
 }

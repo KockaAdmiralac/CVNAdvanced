@@ -60,9 +60,12 @@ class ExampleFormat extends Format {
      * @return {Object} Formatted embed
      */
     execute(transport, msg) {
+        if(msg.type === 'discussions') {
+            return;
+        }
         switch(transport.constructor.name) {
             case 'Discord':
-                return this[`_embed${util.cap(msg.type)}`](msg);
+                return { embeds: [ this[`_embed${util.cap(msg.type)}`](msg) ] };
             default:
                 main.hook('parameterError');
         }
