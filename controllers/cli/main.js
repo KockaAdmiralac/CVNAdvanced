@@ -225,7 +225,7 @@ class CLI extends Controller {
      * @private
      */
     _onServerJoin() {
-        this._output(`Joined the server!`);
+        this._output('Joined the server!');
         this._initialized = true;
         this._read.setPrompt('> ');
         this._read.prompt();
