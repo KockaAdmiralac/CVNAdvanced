@@ -39,8 +39,9 @@ class Controller {
      * @param {Array<Filter>} filters Array of filter classes
      * @param {Array<Transport>} transports Array of transport classes
      * @param {Array<Format>} formats Array of format classes
+     * @param {Array<Extension>} extensions Array of extension classes
      */
-    _onLoad(config, filters, transports, formats) {
+    _onLoad(config, filters, transports, formats, extensions) {
         if(typeof config !== 'object') {
             this.hook('configError');
         }
@@ -48,7 +49,28 @@ class Controller {
         this._filters = filters;
         this._transports = transports;
         this._formats = formats;
+        this._initExtensions(extensions);
         this._client = new Client(this._config);
+        this.hook('init');
+    }
+    /**
+     * Initializes the extensions
+     * @method _initExtensions
+     * @private
+     * @param {Extension} classes Extension classes
+     */
+    _initExtensions(classes) {
+        this._extensions = [];
+        if(this._config.extensions) {
+            util.each(this._config.extensions, function(key, value) {
+                const Extension = classes[key];
+                if(Extension) {
+                    this._extensions.push(new Extension(value));
+                } else {
+                    this.hook('noExtension', key);
+                }
+            }, this);
+        }
     }
     /**
      * Calls a hook
@@ -56,10 +78,14 @@ class Controller {
      */
     hook() {
         const args = Array.prototype.slice.call(arguments),
-              func = this[`_on${util.cap(args.splice(0, 1)[0])}`];
+              name = args.shift(),
+              func = this[`_on${util.cap(name)}`];
         if(typeof func === 'function') {
-            func.apply(this, args);
+            util.safeRun(() => func.apply(this, args), this);
         }
+        this._extensions.forEach(
+            e => util.safeRun(() => e.hook(name, args), this)
+        );
     }
     /**
      * Calls a debug hook
@@ -78,12 +104,49 @@ class Controller {
         this.hook('error', err);
     }
     /**
+     * Calls a warning hook
+     * @method warn
+     * @param {String} warning Warning to show
+     */
+    warn(warning) {
+        this.hook('warn', warning);
+    }
+    /**
      * Returns a requested format object
      * @method format
      * @return {Format} Requested format by name
      */
     format(name) {
         return this._formats[name];
+    }
+    /**
+     * Stops/reloads the process
+     * @method stop
+     */
+    stop(reload) {
+        this._extensions.forEach(e => e.kill());
+        this._client.kill(function() {
+            if(reload) {
+                util.clear(require.cache);
+                util.clear(module.constructor._pathCache);
+                this.initialize();
+            } else {
+                process.exit();
+            }
+        }, this);
+    }
+    /**
+     * Event that allows extensions sending IRC commands
+     * @method _onIrc
+     * @private
+     */
+    _onIrc() {
+        const args = Array.prototype.slice.call(arguments),
+              name = args.shift(),
+              client = this._client.client;
+        if(typeof client[name] === 'function') {
+            client[name].apply(client, args);
+        }
     }
     /**
      * Get available filters

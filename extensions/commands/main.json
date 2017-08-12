@@ -6,7 +6,7 @@
             "website": "https://github.com/KockaAdmiralac"
         }
     ],
-    "name": "Example",
-    "description": "Example filter",
+    "name": "Commands",
+    "description": "An extension that provides commanding the bot through IRC",
     "version": [1, 0, 0]
 }

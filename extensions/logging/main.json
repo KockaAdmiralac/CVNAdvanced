@@ -6,7 +6,7 @@
             "website": "https://github.com/KockaAdmiralac"
         }
     ],
-    "name": "Example",
-    "description": "Example filter",
+    "name": "Logging",
+    "description": "Provides various logs",
     "version": [1, 0, 0]
 }

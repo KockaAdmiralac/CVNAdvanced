@@ -35,14 +35,12 @@ class Discord extends Transport {
      * Transfers the message
      * @method execute
      * @param {Message} msg Message to transfer
-     * @todo Implement this properly
      */
     execute(msg) {
-        io.post(this._url, {
-            embeds: [
-                this._format.execute(this, msg)
-            ]
-        }, null, true).catch(e => main.error(e));
+        const format = this._format.execute(this, msg);
+        if(format) {
+            io.post(this._url, format, null, true).catch(e => main.error(e));
+        }
     }
 }
 

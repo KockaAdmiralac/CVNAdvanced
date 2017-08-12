@@ -6,7 +6,7 @@
             "website": "https://github.com/KockaAdmiralac"
         }
     ],
-    "name": "Example",
-    "description": "Example filter",
+    "name": "Discussions",
+    "description": "For formatting Discussions posts. Only works on Discord",
     "version": [1, 0, 0]
 }

@@ -10,8 +10,7 @@
  */
 const irc = require('irc'),
       Message = require('./msg.js'),
-      util = require('./util.js'),
-      NickServ = require('nickserv');
+      util = require('./util.js');
 
 /**
  * Constants
@@ -21,7 +20,12 @@ const EVENTS = [
     'join',
     'message',
     'registered',
-    'notice'
+    'notice',
+    'part',
+    'kick'
+], CHANNELS = [
+    'cvn-wikia',
+    'wikia-discussions'
 ];
 
 /**
@@ -101,23 +105,21 @@ class Client {
      * Initializes the IRC client object
      * @method _initClient
      * @private
+     * @todo Secure connection
      */
     _initClient() {
-        const c = this._config,
-              options = {
-                  userName: c.user,
-                  realName: c.name,
-                  stripColors: true,
-                  channels: [ '#' + c.channel ]
-              };
-        this._client = new irc.Client(c.server, c.nick, options);
+        const c = this._config;
+        this._client = new irc.Client('chat.freenode.net', c.nick, {
+            userName: c.user,
+            realName: c.name,
+            channels: CHANNELS.map(ch => `#${ch}`),
+            stripColors: true,
+            sasl: true,
+            password: c.password
+        });
         EVENTS.forEach(e => this._client.addListener(
             e, this[`_on${util.cap(e)}`].bind(this)
         ));
-        if(c.password) {
-            this._nickserv = new NickServ(c.nick, { password: c.password });
-            this._nickserv.attach('irc', this._client);
-        }
     }
     /**
      * Event called when an error in IRC client occurs
@@ -138,6 +140,8 @@ class Client {
     _onJoin(channel, nickname) {
         if(nickname === this._config.nick) {
             main.hook('channelJoin', channel);
+        } else {
+            main.hook('userJoin', nickname, channel);
         }
     }
     /**
@@ -147,17 +151,26 @@ class Client {
      * @param {String} nickname Nickname of the user that sent the message
      * @param {String} channel Channel the message was sent in
      * @param {String} text Message contents
+     * @param {Object} message IRC message object
      */
-    _onMessage(nickname, channel, text) {
-        const msg = new Message(text);
-        if(channel === '#' + this._config.channel) {
+    _onMessage(nickname, channel, text, message) {
+        if(!util.includes(CHANNELS, channel.substring(1))) {
+            main.hook('extMsg', nickname, channel, text, message);
+            return;
+        }
+        try {
+            const msg = new Message(text);
             if(msg.type) {
                 this._map.forEach(function(map) {
                     if(map.filter && map.filter.execute(msg)) {
                         map.transport.execute(msg);
                     }
                 });
+            } else {
+                main.hook('unknownMsg', nickname, channel, text, message);
             }
+        } catch(e) {
+            main.error(e);
         }
     }
     /**
@@ -166,10 +179,8 @@ class Client {
      * @private
      */
     _onRegistered() {
+        this._connected = true;
         main.hook('serverJoin');
-        if(this._nickserv) {
-            this._nickserv.identify();
-        }
     }
     /**
      * Event called when an IRC notice is sent
@@ -183,16 +194,60 @@ class Client {
         main.hook('ircNotice', nick, text);
     }
     /**
+     * Event called when a user leaves a channel
+     * @method _onPart
+     * @private
+     * @param {String} channel Channel the user left
+     * @param {String} nickname Nickname of the user that left
+     * @param {String} reason Reason for leaving
+     * @param {Object} message IRC message object
+     */
+    _onPart(channel, nickname, reason, message) {
+        main.hook('part', channel, nickname, reason, message);
+    }
+    /**
+     * Event called when a user gets kicked from a channel
+     * @method _onKick
+     * @private
+     * @param {String} channel Channel the user got kicked from
+     * @param {String} nickname User that got kicked
+     * @param {String} user User that executed the kick
+     * @param {String} reason Reason for the kick
+     * @param {Object} message IRC message object
+     */
+    _onKick(channel, nickname, user, reason, message) {
+        main.hook('kick', channel, nickname, user, reason, message);
+    }
+    /**
      * Kills the IRC client
      * @method kill
      * @param {Function} callback Function to call after client has been killed
      * @param {Object} context Context to bind the callback function to
      */
     kill(callback, context) {
-        this._client.disconnect(
-            this._config.leaveMsg || `${process.env.npm_package_name} - Killed`,
-            callback.bind(context || this)
-        );
+        if(this._connected) {
+            this._client.disconnect(
+                this._config.leaveMsg ||
+                    `${process.env.npm_package_name} - Killed`,
+                callback.bind(context || this)
+            );
+        } else {
+            callback.call(context || this);
+        }
+    }
+    /**
+     * Gets the client
+     * @returns {irc.Client} The IRC client
+     */
+    get client() {
+        return this._client;
+    }
+    /**
+     * Gets if the client is connected to a server
+     * @returns {Boolean} If the client is connected to a server
+     */
+    get connected() {
+        return this._connected;
     }
 }
 

@@ -68,6 +68,39 @@ class Util {
         });
         return Object.freeze(object);
     }
+    /**
+     * Checks if an element is in an array
+     * @method includes
+     * @static
+     * @param {Array} array Array to check
+     * @param {*} element Element to check for
+     */
+    static includes(array, element) {
+        if(!(array instanceof Array)) {
+            main.hook('parameterError', 'Util.includes');
+        }
+        return array.indexOf(element) !== -1;
+    }
+    /**
+     * Removes all properties from an object
+     * @method clear
+     * @static
+     */
+    static clear(object) {
+        Object.keys(object).forEach(k => delete object[k]);
+    }
+    /**
+     * Execute a function and catch any errors in
+     * @param {Function} func Function to safely execute
+     * @param {Object} context Context to bind the function to
+     */
+    static safeRun(func, context) {
+        try {
+            func.call(context);
+        } catch(e) {
+            main.error(e);
+        }
+    }
 }
 
 module.exports = Util;

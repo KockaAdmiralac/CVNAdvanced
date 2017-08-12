@@ -16,6 +16,7 @@ const util = require('./util.js');
  * @todo Move this to a JSON file?
  */
 const REGEX = {
+    discussions: /\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[([^\]]+)\]\])?(?: \((\d+)\))? http:\/\/(.+)\.wikia\.com\/d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/, // jshint ignore:line
     edit: /^(User|IP|Whitelist|Blacklist|Watchlist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked) \[\[([^\]]+)\]\] \(([\+-\d]+)\) (URL|Diff): http:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g, // jshint ignore:line
     replace: /^(User|IP|Whitelist|Blacklist|Watchlist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([\+-\d]+)\) Diff: http:\/\/([^\s]+)\.wikia\.com\/\?([^\s]+)/g, // jshint ignore:line
     block: /^(Block|Unblock) [eE]ditor \[\[User:([^\]]+)\]\] (?:blocked|unblocked) by admin \[\[User:([^\]]+)\]\] (?:Length: (.*) )*"([^"]+)"/g, // jshint ignore:line
@@ -67,11 +68,8 @@ class Message {
             if(hit) {
                 return;
             }
-            // Note: JavaScript regular expressions suck
             let res = v.exec(this.raw);
-            if(!res) {
-                res = v.exec(this.raw);
-            }
+            v.lastIndex = 0;
             if(res) {
                 hit = true;
                 res.shift();
@@ -171,6 +169,51 @@ class Message {
      */
     _handleNoList() {
         // shrug
+    }
+    /**
+     * Handles Discussions events sent in #wikia-discussions channel
+     * @method _handleDiscussions
+     * @private
+     * @param {Array} res Regular expression execution result
+     */
+    _handleDiscussions(res) {
+        this.type = 'discussions';
+        this.user = res.shift();
+        const arr = this._handleDiscussionsAction(
+            res.shift(), res.shift(), res.shift()
+        );
+        this.action = arr[0];
+        this.target = arr[1];
+        this.title = res.shift();
+        this.reply = Number(res.shift());
+        this.wiki = res.shift();
+        this.threadId = res.shift();
+        this.replyId = res.shift();
+        this.summary = res.shift();
+    }
+    /**
+     * Handles Discussions actions
+     * @method _handleDiscussionsAction
+     * @private
+     * @param {String} action1 Whole action
+     * @param {String} action2 If not a specific case, represents an action
+     * @param {String} action3 If not a specific case, represents a target
+     * @returns {Array<String>} Where first element is the action and second
+     *                          the target
+     */
+    _handleDiscussionsAction(action1, action2, action3) {
+        switch(action1) {
+            case 'replied': return ['create', 'reply'];
+            case 'reported post': return ['create', 'report'];
+            default: switch(action2) {
+                case 'created': return ['create', action3];
+                case 'deleted': return ['delete', action3];
+                case 'undeleted': return ['undelete', action3];
+                case 'moved': return ['move', action3];
+                case 'edited': return ['edit', action3];
+                default: return [null, null];
+            }
+        }
     }
     /**
      * Handles some parsing logic in edit-related messages
