@@ -10,7 +10,8 @@
  */
 const fs = require('fs'),
       io = require('../../includes/io.js'),
-      Extension = require('../extension.js');
+      Extension = require('../extension.js'),
+      util = require('../../includes/util.js');
 
 /**
  * Constants
@@ -95,9 +96,8 @@ class Logging extends Extension {
                 }
             }
             this._callWebhook(text, nickname);
-            
         } else if(message.command === 'PRIVMSG') {
-            this._write('PM', `<${nickname}> ${message}`);
+            this._write('PM', `<${nickname}> ${text}`);
         }
     }
     /**
@@ -252,6 +252,21 @@ class Logging extends Extension {
         this._write('PART', `${nickname} -> ${channel}: "${reason}"`);
         if(channel === this._channel) {
             this._callWebhook(`${nickname} left ("${reason}")`);
+        }
+    }
+    /**
+     * Event called when a user quits IRC
+     * @method _onQuit
+     * @private
+     * @param {String} nickname Nickname of the user that quit
+     * @param {String} reason Reason for quitting
+     * @param {String} channels Channels the user quit
+     */
+    _onQuit(nickname, reason, channels) {
+        reason = reason || 'No reason specified';
+        this._write('QUIT', `${nickname} ("${reason}")`);
+        if(util.includes(channels, this._channel)) {
+            this._callWebhook(`${nickname} quit ("${reason}")`);
         }
     }
     /**
