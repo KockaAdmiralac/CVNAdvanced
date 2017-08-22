@@ -22,7 +22,8 @@ const EVENTS = [
     'registered',
     'notice',
     'part',
-    'kick'
+    'kick',
+    'quit'
 ], CHANNELS = [
     'cvn-wikia',
     'wikia-discussions'
@@ -54,7 +55,6 @@ class Client {
         util.each(this._config.filters, function(k, v) {
             if(v.name) {
                 const Filter = main.filters[v.name];
-                delete v.name;
                 if(Filter) {
                     this._filters[k] = new Filter(k, v);
                 }
@@ -72,7 +72,6 @@ class Client {
         util.each(this._config.transports, function(k, v) {
             if(v.name) {
                 const Transport = main.transports[v.name];
-                delete v.name;
                 if(Transport) {
                     this._transports[k] = new Transport(v);
                 }
@@ -217,6 +216,18 @@ class Client {
      */
     _onKick(channel, nickname, user, reason, message) {
         main.hook('kick', channel, nickname, user, reason, message);
+    }
+    /**
+     * Event called when a user quits IRC
+     * @method _onQuit
+     * @private
+     * @param {String} nickname Nickname of the user that quit
+     * @param {String} reason Reason for quitting
+     * @param {String} channels Channels the user quit
+     * @param {Object} message IRC message object
+     */
+    _onQuit(nickname, reason, channels, message) {
+        main.hook('quit', nickname, reason, channels, message);
     }
     /**
      * Kills the IRC client
