@@ -79,6 +79,14 @@ Fired when a user leaves an IRC channel.
 - `reason` (`String`) — Reason for leaving
 - `message` (`Object`) — IRC message object
 
+### privateMsg
+Fired when the user receives a private message.
+#### Parameters
+- `nickname` (`String`) — Nickname of the user that sent the message
+- `channel` (`String`) — The channel the message was sent in
+- `text` (`String`) — Contents of the message
+- `message` (`Object`) — IRC message object
+
 ### serverJoin
 Fired when an IRC server is joined.
 #### Parameters

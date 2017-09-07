@@ -16,8 +16,8 @@ const util = require('./util.js');
  * @todo Move this to a JSON file?
  */
 const REGEX = {
-    discussions: /\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[(.+)\]\])?(?: \((\d+)\))? http:\/\/(.+)\.wikia\.com\/d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/, // jshint ignore:line
-    edit: /^(User|IP|Whitelist|Blacklist|Watchlist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked) \[\[([^\]]+)\]\] \(([\+-\d]+)\) (URL|Diff): http:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g, // jshint ignore:line
+    discussions: /\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[(.*)\]\])?(?: \((\d+)\))? http:\/\/(.+)\.wikia\.com\/d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/, // jshint ignore:line
+    edit: /^(User|IP|Whitelist|Blacklist|Watchlist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked)( watched)? \[\[([^\]]+)\]\] \(([\+-\d]+)\) (URL|Diff): http:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g, // jshint ignore:line
     replace: /^(User|IP|Whitelist|Blacklist|Watchlist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([\+-\d]+)\) Diff: http:\/\/([^\s]+)\.wikia\.com\/\?([^\s]+)/g, // jshint ignore:line
     block: /^(Block|Unblock) [eE]ditor \[\[User:([^\]]+)\]\] (?:blocked|unblocked) by admin \[\[User:([^\]]+)\]\] (?:Length: (.*) )*"([^"]+)"/g, // jshint ignore:line
     // Add proper messages for bna
@@ -88,6 +88,7 @@ class Message {
         this.action = this._handleAction(
             res.shift(), res.shift(), res.shift(), res.shift()
         );
+        this.watchlist = Boolean(res.shift());
         this.title = res.shift();
         this.diffSize = Number(res.shift());
         if(res.shift() === 'URL') {
