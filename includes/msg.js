@@ -17,8 +17,8 @@ const util = require('./util.js');
  */
 const REGEX = {
     discussions: /\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[(.*)\]\])?(?: \((\d+)\))? http:\/\/(.+)\.wikia\.com\/d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/, // jshint ignore:line
-    edit: /^(User|IP|Whitelist|Blacklist|Watchlist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked)( watched)? \[\[([^\]]+)\]\] \(([\+-\d]+)\) (URL|Diff): http:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g, // jshint ignore:line
-    replace: /^(User|IP|Whitelist|Blacklist|Watchlist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([\+-\d]+)\) Diff: http:\/\/([^\s]+)\.wikia\.com\/\?([^\s]+)/g, // jshint ignore:line
+    edit: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked)( watched)? \[\[([^\]]+)\]\] \(([\+-\d]+)\) (URL|Diff): http:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g, // jshint ignore:line
+    replace: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([\+-\d]+)\) Diff: http:\/\/([^\s]+)\.wikia\.com\/\?([^\s]+)/g, // jshint ignore:line
     block: /^(Block|Unblock) [eE]ditor \[\[User:([^\]]+)\]\] (?:blocked|unblocked) by admin \[\[User:([^\]]+)\]\] (?:Length: (.*) )*"([^"]+)"/g, // jshint ignore:line
     // Add proper messages for bna
     list: /^(?:(Added|Updated): )*(.*) is on (global whitelist|global blacklist|global greylist|rc bot list|rc admin list|bad edit summary list|bad new articles list|bad new usernames list), added by (.*) until (.*) \("(.*)"\)$/g, // jshint ignore:line
@@ -34,7 +34,6 @@ const LISTS = {
     'global blacklist': 'bl',
     'global whitelist': 'wl',
     'global greylist': 'gl',
-    // global watchlist???
     'rc bot list': 'bot',
     'rc admin list': 'al',
     'bad edit summary list': 'bes',
