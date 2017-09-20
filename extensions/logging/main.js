@@ -140,7 +140,7 @@ class Logging extends Extension {
               mi = this._padNum(date.getUTCMinutes()),
               h = this._padNum(date.getUTCHours()),
               d = this._padNum(date.getUTCDate()),
-              m = this._padNum(date.getUTCMonth()),
+              m = this._padNum(date.getUTCMonth()) + 1,
               y = this._padNum(date.getUTCFullYear()),
               str = `[${d}/${m}/${y} ${h}:${mi}:${s}] [${type}]`;
         this._log.write(`${text

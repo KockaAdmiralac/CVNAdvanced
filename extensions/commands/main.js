@@ -60,21 +60,19 @@ class Commands extends Extension {
      * @param {String} text Contents of the message
      * @param {Object} message IRC message object
      */
-    _onExtMsg(nickname, channel, text, message) {
-        if(message.command === 'PRIVMSG') {
-            const split = text.trim().split(' '),
-                  name = split.shift().toLowerCase(),
-                  func = this[`_cmd${util.cap(name)}`];
-            if(
-                typeof func === 'function' &&
-                this._isAllowed(message.host, name)
-            ) {
-                const ret = func.apply(this, split);
-                if(typeof ret === 'string') {
-                    main.hook('irc', 'say', nickname, ret);
-                } else if(ret instanceof Promise) {
-                    ret.then(rep => main.hook('irc', 'say', nickname, rep));
-                }
+    _onPrivateMsg(nickname, channel, text, message) {
+        const split = text.trim().split(' '),
+              name = split.shift().toLowerCase(),
+              func = this[`_cmd${util.cap(name)}`];
+        if(
+            typeof func === 'function' &&
+            this._isAllowed(message.host, name)
+        ) {
+            const ret = func.apply(this, split);
+            if(typeof ret === 'string') {
+                main.hook('irc', 'say', nickname, ret);
+            } else if(ret instanceof Promise) {
+                ret.then(rep => main.hook('irc', 'say', nickname, rep));
             }
         }
     }

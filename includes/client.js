@@ -154,7 +154,15 @@ class Client {
      */
     _onMessage(nickname, channel, text, message) {
         if(!util.includes(CHANNELS, channel.substring(1))) {
-            main.hook('extMsg', nickname, channel, text, message);
+            main.hook(
+                this._client.nick === channel ?
+                    'privateMsg' :
+                    'extMsg',
+                nickname,
+                channel,
+                text,
+                message
+            );
             return;
         }
         try {
