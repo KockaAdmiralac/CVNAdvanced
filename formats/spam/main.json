@@ -1,0 +1,12 @@
+{
+    "authors": [
+        {
+            "name": "KockaAdmiralac",
+            "email": "1405223@gmail.com",
+            "website": "https://github.com/KockaAdmiralac"
+        }
+    ],
+    "name": "Spam",
+    "description": "Format for messages from #wikia-spam",
+    "version": [1, 0, 0]
+}

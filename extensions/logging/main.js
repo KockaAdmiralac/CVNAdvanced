@@ -1,6 +1,6 @@
 /**
  * main.js
- * 
+ *
  * Main extension module
  */
 'use strict';
@@ -10,8 +10,7 @@
  */
 const fs = require('fs'),
       io = require('../../includes/io.js'),
-      Extension = require('../extension.js'),
-      util = require('../../includes/util.js');
+      Extension = require('../extension.js');
 
 /**
  * Constants
@@ -20,13 +19,11 @@ const RELAY_REGEX = /^<([^>]+)> (.*)/;
 
 /**
  * Main extension class
- * @class Logging
  * @augments Extension
  */
 class Logging extends Extension {
     /**
      * Class constructor
-     * @constructor
      * @param {Object} config Extension configuration
      */
     constructor(config) {
@@ -34,8 +31,8 @@ class Logging extends Extension {
         this._log = fs.createWriteStream(config.file || 'log.txt', {
             flags: 'a'
         });
-        if(config.id && config.token) {
-            this._url = `https://discordapp.com/api/webhooks/${config.id}/${config.token}`; // jshint ignore: line
+        if (config.id && config.token) {
+            this._url = `https://discordapp.com/api/webhooks/${config.id}/${config.token}`;
             this._channel = config.channel || '#wikia-vstf';
             this._relay = config.relayPrefix || 'RansomRelay';
         } else {
@@ -44,18 +41,16 @@ class Logging extends Extension {
     }
     /**
      * Event called upon joining the IRC server
-     * @method _onServerJoin
      * @private
      */
     _onServerJoin() {
         this._write('JOIN', 'server');
-        if(this._channel) {
+        if (this._channel) {
             main.hook('irc', 'join', this._channel);
         }
     }
     /**
      * Event called upon joining an IRC channel
-     * @method _onChannelJoin
      * @private
      * @param {String} channel Joined channel
      */
@@ -64,20 +59,18 @@ class Logging extends Extension {
     }
     /**
      * Event emitted when another user joins a channel
-     * @method _onUserJoin
      * @private
      * @param {String} nickname User that joined
      * @param {String} channel Channel the user joined
      */
     _onUserJoin(nickname, channel) {
         this._write('JOIN', `channel: ${channel}, user: ${nickname}`);
-        if(channel === this._channel) {
+        if (channel === this._channel) {
             this._callWebhook(`${nickname} joined`);
         }
     }
     /**
      * Event emitted when a message is sent outside of regular channels
-     * @method _onExtMsg
      * @private
      * @param {String} nickname User sending the message
      * @param {String} channel Channel the message is sent in
@@ -85,24 +78,24 @@ class Logging extends Extension {
      * @param {Object} message IRC message object
      */
     _onExtMsg(nickname, channel, text, message) {
-        if(channel === this._channel) {
-            if(nickname.startsWith(this._relay)) {
+        let nick = nickname, newtext = text;
+        if (channel === this._channel) {
+            if (nickname.startsWith(this._relay)) {
                 const res = RELAY_REGEX.exec(text);
                 RELAY_REGEX.lastIndex = 0;
-                if(res) {
+                if (res) {
                     res.shift();
-                    nickname = `${res.shift()} [Relay]`;
-                    text = res.shift();
+                    nick = `${res.shift()} [Relay]`.slice(0, 32);
+                    newtext = res.shift();
                 }
             }
-            this._callWebhook(text, nickname);
-        } else if(message.command === 'PRIVMSG') {
+            this._callWebhook(newtext, nick);
+        } else if (message.command === 'PRIVMSG') {
             this._write('PM', `<${nickname}> ${text}`);
         }
     }
     /**
      * Calls a logging webhook
-     * @method _callWebhook
      * @private
      * @param {String} text Contents of the webhook message
      * @param {String} username Username in the webhook
@@ -110,15 +103,14 @@ class Logging extends Extension {
     _callWebhook(text, username) {
         io.post(this._url, {
             content: text
-                .replace(/\@/g, '@​')
+                .replace(/@/g, '@​')
                 .replace(/discord\.gg/g, 'discord​.gg'),
-            username: username
+            username
         }, null, true);
     }
     /**
      * Event emitted when an unparsable message gets sent into
      * #cvn-wikia or #wikia-discussions
-     * @method _onUnknownMsg
      * @private
      * @param {String} nickname User sending the message
      * @param {String} channel The channel message was sent in
@@ -129,7 +121,6 @@ class Logging extends Extension {
     }
     /**
      * Writes to the file
-     * @method _write
      * @private
      * @param {String} type Type of the message
      * @param {String} text Text to write to the file
@@ -151,29 +142,26 @@ class Logging extends Extension {
     }
     /**
      * Ensures a number string is two spaces wide
-     * @method _padNum
      * @private
      * @param {Number} number Number to pad
      * @returns {String} Padded number
      */
     _padNum(number) {
-        if(number < 10) {
-            return '0' + number;
+        if (number < 10) {
+            return `0${number}`;
         }
         return String(number);
     }
     /**
      * Event called if an extension doesn't exist
-     * @method _onNoExtension
      * @private
-     * @param {String} extension 
+     * @param {String} extension The extension that doesn't exist
      */
     _onNoExtension(extension) {
         this._write('ERROR', `No extension: ${extension}`);
     }
     /**
      * Event called when a debug is requested
-     * @method _onDebug
      * @private
      * @param {String} text Text to debug
      */
@@ -182,7 +170,6 @@ class Logging extends Extension {
     }
     /**
      * Event called after an internal error occurs
-     * @method _onError
      * @private
      * @param {String|Error} err Error being thrown
      */
@@ -198,7 +185,6 @@ class Logging extends Extension {
     }
     /**
      * Event called if a method is called with unexpected parameters
-     * @method _onParameterError
      * @private
      * @param {String} method Method that was called
      */
@@ -207,7 +193,6 @@ class Logging extends Extension {
     }
     /**
      * Event called when IRC notice is received
-     * @method _onIrcNotice
      * @private
      * @param {String} nick Nickname of the notice sender
      * @param {String} text Notice contents
@@ -217,7 +202,6 @@ class Logging extends Extension {
     }
     /**
      * Event called after all resources have loaded
-     * @method _onInit
      * @private
      */
     _onInit() {
@@ -225,7 +209,6 @@ class Logging extends Extension {
     }
     /**
      * Event called when a user gets kicked from a channel
-     * @method _onKick
      * @private
      * @param {String} channel Channel the user got kicked from
      * @param {String} nickname User that got kicked
@@ -233,48 +216,45 @@ class Logging extends Extension {
      * @param {String} reason Reason for the kick
      */
     _onKick(channel, nickname, user, reason) {
-        reason = reason || 'No reason specified';
-        this._write('KICK', `${user} -> ${nickname}: "${reason}"`);
-        if(channel === this._channel) {
-            this._callWebhook(`${user} kicked ${nickname} (*${reason}*)`);
+        const defReason = reason || 'No reason specified';
+        this._write('KICK', `${user} -> ${nickname}: "${defReason}"`);
+        if (channel === this._channel) {
+            this._callWebhook(`${user} kicked ${nickname} (*${defReason}*)`);
         }
     }
     /**
      * Event called when a user leaves an IRC channel
-     * @method _onPart
      * @private
      * @param {String} channel Channel the user left
      * @param {String} nickname User that left
      * @param {String} reason Reason for leaving
      */
     _onPart(channel, nickname, reason) {
-        reason = reason || 'No reason specified';
-        this._write('PART', `${nickname} -> ${channel}: "${reason}"`);
-        if(channel === this._channel) {
-            this._callWebhook(`${nickname} left ("${reason}")`);
+        const defReason = reason || 'No reason specified';
+        this._write('PART', `${nickname} -> ${channel}: "${defReason}"`);
+        if (channel === this._channel) {
+            this._callWebhook(`${nickname} left ("${defReason}")`);
         }
     }
     /**
      * Event called when a user quits IRC
-     * @method _onQuit
      * @private
      * @param {String} nickname Nickname of the user that quit
      * @param {String} reason Reason for quitting
      * @param {String} channels Channels the user quit
      */
     _onQuit(nickname, reason, channels) {
-        reason = reason || 'No reason specified';
-        this._write('QUIT', `${nickname} ("${reason}")`);
-        if(util.includes(channels, this._channel)) {
-            this._callWebhook(`${nickname} quit ("${reason}")`);
+        const defReason = reason || 'No reason specified';
+        this._write('QUIT', `${nickname} ("${defReason}")`);
+        if (channels.includes(this._channel)) {
+            this._callWebhook(`${nickname} quit ("${defReason}")`);
         }
     }
     /**
      * Does extension disposal
-     * @method kill
      */
     kill() {
-        if(this._log) {
+        if (this._log) {
             this._write('END', '');
             this._log.end();
         }

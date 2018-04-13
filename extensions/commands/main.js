@@ -1,6 +1,6 @@
 /**
  * main.js
- * 
+ *
  * Main extension module
  */
 'use strict';
@@ -14,26 +14,26 @@ const Extension = require('../extension.js'),
 
 /**
  * Main extension class
- * @class Commands
  * @augments Extension
  */
 class Commands extends Extension {
     /**
      * Class constructor
-     * @constructor
      * @param {Object} config Extension configuration
      */
     constructor(config) {
         super(config);
         this._permissions = config.permissions || {};
-        if(this._permissions.length === 0) {
+        if (this._permissions.length === 0) {
             // TODO: Extract to i18n
-            main.warn('Command whitelist is empty! That means nobody will be able to use IRC commands'); // jshint ignore: line
+            main.warn(
+                'Command whitelist is empty!\n' +
+                'That means nobody will be able to use IRC commands'
+            );
         }
     }
     /**
      * Checks whether a user is allowed to execute a command
-     * @method _isAllowed
      * @private
      * @param {String} host Host of the user
      * @param {String} command Command to execute
@@ -42,18 +42,16 @@ class Commands extends Extension {
     _isAllowed(host, command) {
         const perms = this._permissions[host],
               def = this._permissions['#default'];
-        return util.includes(
+        return (
             perms instanceof Array ?
                 perms.concat(def) :
                 def instanceof Array ?
                     def :
-                    [],
-            command
-        );
+                    []
+        ).includes(command);
     }
     /**
      * Event emitted when a message is sent outside of regular channels
-     * @method _onExtMsg
      * @private
      * @param {String} nickname User sending the message
      * @param {String} channel Channel the message is sent in
@@ -64,21 +62,20 @@ class Commands extends Extension {
         const split = text.trim().split(' '),
               name = split.shift().toLowerCase(),
               func = this[`_cmd${util.cap(name)}`];
-        if(
+        if (
             typeof func === 'function' &&
             this._isAllowed(message.host, name)
         ) {
             const ret = func.apply(this, split);
-            if(typeof ret === 'string') {
+            if (typeof ret === 'string') {
                 main.hook('irc', 'say', nickname, ret);
-            } else if(ret instanceof Promise) {
+            } else if (ret instanceof Promise) {
                 ret.then(rep => main.hook('irc', 'say', nickname, rep));
             }
         }
     }
     /**
      * Hello
-     * @method _cmdHello
      * @private
      * @returns {String} Hello
      */
@@ -87,7 +84,6 @@ class Commands extends Extension {
     }
     /**
      * Restart the bot
-     * @method _cmdRestart
      * @private
      */
     _cmdRestart() {
@@ -95,7 +91,6 @@ class Commands extends Extension {
     }
     /**
      * Stops the bot
-     * @method _cmdStop
      * @private
      */
     _cmdStop() {
@@ -103,57 +98,55 @@ class Commands extends Extension {
     }
     /**
      * Configures the bot
-     * @method _cmdConfig
      * @private
      * @param {String} action Action to execute on configuration
      * @param {String} option Configuration option to change
      * @param {String} value Value to set on the configuration option
      * @param {String} action2 Additional action for arrays and objects
+     * @returns {String} Response to the configuration command
      */
     _cmdConfig(action, option, value, action2) {
-        if(!action || !option) {
+        if (!action || !option) {
             return 'Action and option required for this command!';
         }
         const obj = require('./../../config.json');
-        let ref = obj,
-            last;
-        if(option !== '*') {
+        let ref = obj, last = null;
+        if (option !== '*') {
             const split = option.split('.');
-            while(split.length > 1) {
-                ref = typeof ref === 'object' ? ref[split.shift()] : undefined;
+            while (split.length > 1) {
+                ref = typeof ref === 'object' ? ref[split.shift()] : null;
             }
             last = split.shift();
         }
         const val = last ? ref[last] : ref,
               type = typeof val;
-        switch(action) {
+        switch (action) {
             case 'show':
-                if(val === null || type === 'string' || type === 'number') {
+                if (val === null || type === 'string' || type === 'number') {
                     return JSON.stringify(val);
-                } else if(val instanceof Array) {
+                } else if (val instanceof Array) {
                     return `(${val.length}) [${
                         val.map(function(el) {
-                            if(el instanceof Array) {
+                            if (el instanceof Array) {
                                 return 'Array[]';
-                            } else if(typeof el === 'object') {
+                            } else if (typeof el === 'object') {
                                 return 'Object{}';
-                            } else {
-                                return JSON.stringify(el);
                             }
+                            return JSON.stringify(el);
                         }).join(', ')
                     }]`;
-                } else if(type === 'object') {
+                } else if (type === 'object') {
                     return `{${Object.keys(val).join(', ')}}`;
-                } else if(type === 'undefined') {
+                } else if (type === 'undefined') {
                     return 'undefined';
                 }
                 break;
             case 'edit':
-                if(!value) {
+                if (!value) {
                     return 'No value specified!';
                 }
-                if(val instanceof Array) {
-                    switch(action2) {
+                if (val instanceof Array) {
+                    switch (action2) {
                         case 'push':
                             ref[last].push(value);
                             break;
@@ -166,7 +159,7 @@ class Commands extends Extension {
                         default:
                             return 'Unknown array action!';
                     }
-                } else if(type === 'object') {
+                } else if (type === 'object') {
                     return 'You cannot modify an object directly!';
                 } else {
                     ref[last] = value;
@@ -176,7 +169,7 @@ class Commands extends Extension {
                         'config.json',
                         JSON.stringify(obj, null, '    '),
                         function(err) {
-                            if(err) {
+                            if (err) {
                                 reject(err);
                             } else {
                                 resolve('Configuration saved!');

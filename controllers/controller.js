@@ -14,26 +14,22 @@ const Client = require('../includes/client.js'),
 
 /**
  * Base controller class
- * @class Controller
  */
 class Controller {
     /**
      * Class constructor
-     * @constructor
      */
     constructor() {
         this._loader = new Loader();
     }
     /**
      * Initializer
-     * @method initialize
      */
     initialize() {
         this._loader.load(this._onLoad, this);
     }
     /**
      * Event called after loader loads the resources
-     * @method _onLoad
      * @private
      * @param {Object} config Configuration object
      * @param {Array<Filter>} filters Array of filter classes
@@ -42,7 +38,7 @@ class Controller {
      * @param {Array<Extension>} extensions Array of extension classes
      */
     _onLoad(config, filters, transports, formats, extensions) {
-        if(typeof config !== 'object') {
+        if (typeof config !== 'object') {
             this.hook('configError');
         }
         this._config = config;
@@ -55,32 +51,30 @@ class Controller {
     }
     /**
      * Initializes the extensions
-     * @method _initExtensions
      * @private
      * @param {Extension} classes Extension classes
      */
     _initExtensions(classes) {
         this._extensions = [];
-        if(this._config.extensions) {
-            util.each(this._config.extensions, function(key, value) {
-                const Extension = classes[key];
-                if(Extension) {
+        if (this._config.extensions) {
+            for (const i in this._config.extensions) {
+                const value = this._config.extensions[i],
+                      Extension = classes[i];
+                if (Extension) {
                     this._extensions.push(new Extension(value));
                 } else {
-                    this.hook('noExtension', key);
+                    this.hook('noExtension', i);
                 }
-            }, this);
+            }
         }
     }
     /**
      * Calls a hook
-     * @method hook
      */
-    hook() {
-        const args = Array.prototype.slice.call(arguments),
-              name = args.shift(),
+    hook(...args) {
+        const name = args.shift(),
               func = this[`_on${util.cap(name)}`];
-        if(typeof func === 'function') {
+        if (typeof func === 'function') {
             util.safeRun(() => func.apply(this, args), this);
         }
         this._extensions.forEach(
@@ -89,7 +83,6 @@ class Controller {
     }
     /**
      * Calls a debug hook
-     * @method debug
      * @param {String} text Text to debug
      */
     debug(text) {
@@ -97,7 +90,6 @@ class Controller {
     }
     /**
      * Calls an error hook
-     * @method error
      * @param {String|Error} err Error to throw
      */
     error(err) {
@@ -105,7 +97,6 @@ class Controller {
     }
     /**
      * Calls a warning hook
-     * @method warn
      * @param {String} warning Warning to show
      */
     warn(warning) {
@@ -113,22 +104,23 @@ class Controller {
     }
     /**
      * Returns a requested format object
-     * @method format
-     * @return {Format} Requested format by name
+     * @param {String} name Name of the format
+     * @returns {Format} Requested format by name
      */
     format(name) {
         return this._formats[name];
     }
     /**
      * Stops/reloads the process
-     * @method stop
+     * @param {Boolean} reload If to reload the process instead
      */
     stop(reload) {
         this._extensions.forEach(e => e.kill());
         this._client.kill(function() {
-            if(reload) {
+            if (reload) {
                 util.clear(require.cache);
                 util.clear(module.constructor._pathCache);
+                // eslint-disable-next-line
                 this.initialize();
             } else {
                 process.exit();
@@ -137,27 +129,25 @@ class Controller {
     }
     /**
      * Event that allows extensions sending IRC commands
-     * @method _onIrc
      * @private
      */
-    _onIrc() {
-        const args = Array.prototype.slice.call(arguments),
-              name = args.shift(),
-              client = this._client.client;
-        if(typeof client[name] === 'function') {
-            client[name].apply(client, args);
+    _onIrc(...args) {
+        const name = args.shift(),
+              {client} = this._client;
+        if (typeof client[name] === 'function') {
+            client[name](...args);
         }
     }
     /**
      * Get available filters
-     * @return {Array<Filter>} Array of filter classes
+     * @returns {Array<Filter>} Array of filter classes
      */
     get filters() {
         return this._filters;
     }
     /**
      * Get available transports
-     * @return {Array<Transport>} Array of Transport classes
+     * @returns {Array<Transport>} Array of Transport classes
      */
     get transports() {
         return this._transports;

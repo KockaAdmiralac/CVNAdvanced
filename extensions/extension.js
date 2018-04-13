@@ -31,7 +31,7 @@ class Extension {
      */
     hook(name, args) {
         const func = this[`_on${util.cap(name)}`];
-        if(typeof func === 'function') {
+        if (typeof func === 'function') {
             func.apply(this, args);
         }
     }

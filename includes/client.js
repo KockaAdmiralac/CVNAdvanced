@@ -10,7 +10,8 @@
  */
 const irc = require('irc'),
       Message = require('./msg.js'),
-      util = require('./util.js');
+      util = require('./util.js'),
+      packageJSON = require('../package.json');
 
 /**
  * Constants
@@ -26,7 +27,9 @@ const EVENTS = [
     'quit'
 ], CHANNELS = [
     'cvn-wikia',
-    'wikia-discussions'
+    'cvn-wikia-newusers',
+    'wikia-discussions',
+    'wikia-spam'
 ];
 
 /**
@@ -47,74 +50,70 @@ class Client {
     }
     /**
      * Initializes filters
-     * @method _initFilters
      * @private
      */
     _initFilters() {
         this._filters = {};
-        util.each(this._config.filters, function(k, v) {
-            if(v.name) {
-                const Filter = main.filters[v.name];
-                if(Filter) {
-                    this._filters[k] = new Filter(k, v);
-                }
+        for (const i in this._config.filters) {
+            const v = this._config.filters[i],
+                  Filter = main.filters[v.name || i];
+            if (Filter) {
+                this._filters[i] = new Filter(i, v);
             }
-        }, this);
+        }
     }
     /**
      * Initializes transports
-     * @method _initTransports
      * @private
      * @todo DRY
      */
     _initTransports() {
         this._transports = {};
-        util.each(this._config.transports, function(k, v) {
-            if(v.name) {
-                const Transport = main.transports[v.name];
-                if(Transport) {
-                    this._transports[k] = new Transport(v);
-                }
+        for (const i in this._config.transports) {
+            const v = this._config.transports[i],
+                  Transport = main.transports[v.name || i];
+            if (Transport) {
+                this._transports[i] = new Transport(v);
             }
-        }, this);
+        }
     }
     /**
      * Initializes filter-transport map
-     * @method _initMap
      * @private
      */
     _initMap() {
         this._map = [];
-        util.each(this._config.map, function(k, v) {
-            const filter = this._filters[k];
-            if(typeof v === 'string') {
+        for (const i in this._config.map) {
+            const v = this._config.map[i],
+                  filter = this._filters[i];
+            if (typeof v === 'string') {
                 this._map.push({
-                    filter: filter,
+                    filter,
                     transport: this._transports[v]
                 });
-            } else if(v instanceof Array) {
+            } else if (v instanceof Array) {
                 v.forEach(t => this._map.push({
-                    filter: filter,
+                    filter,
                     transport: this._transports[t]
                 }));
             }
-        }, this);
+        }
     }
     /**
      * Initializes the IRC client object
-     * @method _initClient
      * @private
      * @todo Secure connection
      */
     _initClient() {
         const c = this._config;
+        this.channels = c.channels || CHANNELS;
         this._client = new irc.Client('chat.freenode.net', c.nick, {
-            userName: c.user,
+            channels: this.channels.map(ch => `#${ch}`),
+            password: c.password,
             realName: c.name,
-            channels: CHANNELS.map(ch => `#${ch}`),
-            stripColors: true,
             sasl: true,
-            password: c.password
+            stripColors: true,
+            userName: c.user
         });
         EVENTS.forEach(e => this._client.addListener(
             e, this[`_on${util.cap(e)}`].bind(this)
@@ -122,7 +121,6 @@ class Client {
     }
     /**
      * Event called when an error in IRC client occurs
-     * @method _onError
      * @private
      * @param {Object} message IRC message with the error
      */
@@ -131,13 +129,12 @@ class Client {
     }
     /**
      * Event called when a channel is joined in IRC
-     * @method _onJoin
      * @private
      * @param {String} channel Channel that was joined
      * @param {String} nickname Nickname of the user that joined
      */
     _onJoin(channel, nickname) {
-        if(nickname === this._config.nick) {
+        if (nickname === this._config.nick) {
             main.hook('channelJoin', channel);
         } else {
             main.hook('userJoin', nickname, channel);
@@ -145,7 +142,6 @@ class Client {
     }
     /**
      * Event called when a message is received
-     * @method _onMessage
      * @private
      * @param {String} nickname Nickname of the user that sent the message
      * @param {String} channel Channel the message was sent in
@@ -153,7 +149,7 @@ class Client {
      * @param {Object} message IRC message object
      */
     _onMessage(nickname, channel, text, message) {
-        if(!util.includes(CHANNELS, channel.substring(1))) {
+        if (!this.channels.includes(channel.substring(1))) {
             main.hook(
                 this._client.nick === channel ?
                     'privateMsg' :
@@ -167,22 +163,21 @@ class Client {
         }
         try {
             const msg = new Message(text);
-            if(msg.type) {
+            if (msg.type) {
                 this._map.forEach(function(map) {
-                    if(map.filter && map.filter.execute(msg)) {
+                    if (map.filter && map.filter.execute(msg)) {
                         map.transport.execute(msg);
                     }
                 });
             } else {
                 main.hook('unknownMsg', nickname, channel, text, message);
             }
-        } catch(e) {
+        } catch (e) {
             main.error(e);
         }
     }
     /**
      * Event called when the IRC client joins the IRC server
-     * @method _onRegistered
      * @private
      */
     _onRegistered() {
@@ -191,18 +186,16 @@ class Client {
     }
     /**
      * Event called when an IRC notice is sent
-     * @method _onNotice
      * @private
      * @param {String} nick Nickname sending the notice
      * @param {String} to Notice receiver
      * @param {String} text Message contents
-     **/
+     */
     _onNotice(nick, to, text) {
         main.hook('ircNotice', nick, text);
     }
     /**
      * Event called when a user leaves a channel
-     * @method _onPart
      * @private
      * @param {String} channel Channel the user left
      * @param {String} nickname Nickname of the user that left
@@ -214,7 +207,6 @@ class Client {
     }
     /**
      * Event called when a user gets kicked from a channel
-     * @method _onKick
      * @private
      * @param {String} channel Channel the user got kicked from
      * @param {String} nickname User that got kicked
@@ -227,7 +219,6 @@ class Client {
     }
     /**
      * Event called when a user quits IRC
-     * @method _onQuit
      * @private
      * @param {String} nickname Nickname of the user that quit
      * @param {String} reason Reason for quitting
@@ -239,15 +230,14 @@ class Client {
     }
     /**
      * Kills the IRC client
-     * @method kill
      * @param {Function} callback Function to call after client has been killed
      * @param {Object} context Context to bind the callback function to
      */
     kill(callback, context) {
-        if(this._connected) {
+        if (this._connected) {
             this._client.disconnect(
                 this._config.leaveMsg ||
-                    `${process.env.npm_package_name} - Killed`,
+                    `${packageJSON.name} - Killed`,
                 callback.bind(context || this)
             );
         } else {
