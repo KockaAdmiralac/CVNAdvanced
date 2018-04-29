@@ -50,7 +50,7 @@ class ExampleFormat extends Format {
         const ret = {
             fields: [],
             title: info.username,
-            url: `http://${wiki}.wikia.com/wiki/Special:Contribs/${user}`
+            url: `https://${wiki}.wikia.com/wiki/Special:Contribs/${user}`
         };
         if (info.avatar) {
             ret.image = {

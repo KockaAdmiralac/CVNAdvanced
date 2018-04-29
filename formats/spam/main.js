@@ -31,7 +31,7 @@ class SpamFormat extends Format {
                 {
                     author: {
                         name: msg.user,
-                        url: `http://${msg.wiki}.wikia.com/wiki/Special:Contribs/${util.encode(msg.user)}`
+                        url: `https://${msg.wiki}.wikia.com/wiki/Special:Contribs/${util.encode(msg.user)}`
                     },
                     color: 0xFFFFFF,
                     description: this._embedDescription(msg),
@@ -72,9 +72,9 @@ class SpamFormat extends Format {
         switch (msg.coi) {
             case 2:
             case 3:
-                return `http://${msg.wiki}.wikia.com`;
+                return `https://${msg.wiki}.wikia.com`;
             default:
-                return `http://${msg.wiki}.wikia.com/?oldid=${msg.oldid}`;
+                return `https://${msg.wiki}.wikia.com/?oldid=${msg.oldid}`;
         }
     }
     /**

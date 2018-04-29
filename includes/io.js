@@ -107,7 +107,7 @@ class IO {
         options.format = 'json';
         return IO._request(
             method || 'GET',
-            `http://${wiki}.wikia.com/api.php`,
+            `https://${wiki}.wikia.com/api.php`,
             options,
             function(data) {
                 // TODO: Improve this

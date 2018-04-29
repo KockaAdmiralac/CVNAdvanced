@@ -44,14 +44,14 @@ class DiscussionsFormat extends Format {
                 {
                     author: {
                         name: `${msg.user} [${msg.wiki}]`,
-                        url: `http://${msg.wiki || 'c'}.wikia.com/wiki/Special:Contribs/${util.encode(msg.user)}`
+                        url: `https://${msg.wiki || 'c'}.wikia.com/wiki/Special:Contribs/${util.encode(msg.user)}`
                     },
                     color: COLOR[msg.target],
                     description: msg.summary,
                     title: msg.title ?
                         `${msg.title} [${this._processAction(msg)}]` :
                         this._processAction(msg),
-                    url: `http://${msg.wiki}.wikia.com/d/p/${msg.replyId ?
+                    url: `https://${msg.wiki}.wikia.com/d/p/${msg.replyId ?
                              `${msg.threadId}/r/${msg.replyId}` :
                              msg.threadId
                     }`

@@ -171,7 +171,7 @@ class ExampleFormat extends Format {
      * @returns {String} Markdown URL
      */
     _makeURL(wiki, page, text) {
-        return `[${text || page}](http://${wiki}.wikia.com/${page})`;
+        return `[${text || page}](https://${wiki}.wikia.com/${page})`;
     }
     /**
      * Creates a Markdown URL to a wiki page
@@ -248,7 +248,7 @@ class ExampleFormat extends Format {
      * @returns {String} URL to user's contributions
      */
     _userURL(msg) {
-        return `http://${msg.wiki || 'c'}.wikia.com/wiki/Special:Contribs/${util.encode(msg.user)}`;
+        return `https://${msg.wiki || 'c'}.wikia.com/wiki/Special:Contribs/${util.encode(msg.user)}`;
     }
 }
 
