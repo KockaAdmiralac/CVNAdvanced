@@ -85,7 +85,7 @@ class Logging extends Extension {
                 RELAY_REGEX.lastIndex = 0;
                 if (res) {
                     res.shift();
-                    nick = `${res.shift()} [Relay]`.slice(0, 32);
+                    nick = `${res.shift().slice(0, 24)} [Relay]`;
                     newtext = res.shift();
                 }
             }

@@ -65,7 +65,6 @@ class Message {
     /**
      * Determines the message type and passes regex result to further methods
      * @private
-     * @returns {void}
      */
     _initType() {
         for (const i in REGEX) {
@@ -83,7 +82,6 @@ class Message {
      * Handles message parsing in case the message was an edit sign
      * @private
      * @param {Array} res Regular expression execution result
-     * @returns {void}
      */
     _handleEdit(res) {
         this._handleEditBase(res.shift(), res.shift());
@@ -104,7 +102,6 @@ class Message {
      * Handles message parsing in case the message was a replacement sign
      * @private
      * @param {Array} res Regular expression execution result
-     * @returns {void}
      */
     _handleReplace(res) {
         this._handleEditBase(res.shift(), res.shift());
@@ -118,7 +115,6 @@ class Message {
      * Handles message parsing in case the message was a block sign
      * @private
      * @param {Array} res Regular expression execution result
-     * @returns {void}
      */
     _handleBlock(res) {
         this.type = 'block';
@@ -132,7 +128,6 @@ class Message {
      * Handles message parsing in case the message was a list modification sign
      * @private
      * @param {Array} res Regular expression execution result
-     * @returns {void}
      */
     _handleList(res) {
         this.type = 'list';
@@ -153,7 +148,6 @@ class Message {
      * Handles message parsing in case the message was a list removal sign
      * @private
      * @param {Array} res Regular expression execution result
-     * @returns {void}
      */
     _handleListRemove(res) {
         this.type = 'list';
@@ -168,7 +162,6 @@ class Message {
      * @param {Array} res Regular expression execution result
      * @todo Word this description better
      * @todo Make this not a noop
-     * @returns {void}
      */
     _handleNoList() {
         // ¯\_(ツ)_/¯
@@ -178,7 +171,6 @@ class Message {
      * @private
      * @param {String} type A user's type
      * @param {String} name User's name
-     * @returns {void}
      */
     _handleEditBase(type, name) {
         this.type = 'edit';
@@ -248,7 +240,6 @@ class Message {
      * Handles Discussions events sent in #wikia-discussions channel
      * @private
      * @param {Array} res Regular expression execution result
-     * @returns {void}
      */
     _handleDiscussions(res) {
         this.type = 'discussions';
@@ -292,7 +283,6 @@ class Message {
      * Handles possible spam sent in #wikia-spam channel
      * @private
      * @param {Array} res Regular expression execution result
-     * @returns {void}
      */
     _handleSpam(res) {
         this.type = 'spam';
@@ -321,7 +311,6 @@ class Message {
      * Handles new user registration messages
      * @private
      * @param {Array} res Regular expression execution result
-     * @returns {void}
      */
     _handleNewusers(res) {
         this.type = 'newusers';
