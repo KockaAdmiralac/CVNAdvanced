@@ -7,6 +7,8 @@ There are three message types, stored in the `type` property of a Message object
 - `list` - If the message represents a list modification
 - `block` - If the message represents a block
 - `discussions` - If the message represents a Discussions event
+- `spam` - If the message represents possible spam
+- `newusers` - If the message represents a new user registering
 
 ### Edit
 If the message represents an edit, it can be one of three actions, stored in the `action` property:
@@ -89,6 +91,41 @@ It can also contain the following properties:
 | `replyId`  | String  | ID of the reply                         | not `thread`      |
 | `summary`  | String  | Excerpt from the thread                 | Always            |
 
+### Spam
+If the message represents possible spam, it will have a `spamtype` property which can be set to either `coi` or `hit`,
+depending on if the user hit one of the Conflict of Interest filters or the spam blacklist.
+
+Meanings of spam filters are as following:
+- `COI1` - User inserted a link that matches their username
+- `COI2` - Wiki URL matches its founder's username
+- `COI3` - Wiki name matches its founder's username
+- `COI4` - User inserted a link into their newfounded wiki too soon
+- `COI5` - Content of a newly created page matches spam filter
+- `HIT` - Link blacklist
+It will also have an `action` property which represents what did the user do when they hit the filter:
+- `edit` - The user was editing a page
+- `create` - The user was creating a page
+- `wiki` - The user was creating a wiki
+It can also contain the following properties:
+
+| Name      | Type    | Description                               | Present if                     |
+| --------- | ------- | ----------------------------------------- | ------------------------------ |
+| `coi`     | Integer | Number of the Conflict of Interest filter | Conflict of Interest happened  |
+| `percent` | Float   | How much the action matched the filter    | Always                         |
+| `user`    | String  | User that hit the filter                  | Always                         |
+| `wiki`    | String  | On which wiki was the action attempted    | Always                         |
+| `oldid`   | Integer | ID of the revision                        | Page was created               |
+| `title`   | String  | Title of the page                         | Wiki was created               |
+| `url`     | String  | URL that was inserted                     | Page was created               |
+| `filter`  | Integer | Filter that was hit                       | Blacklist or COI5 has been hit |
+
+### New users
+If the message represents a user that just registered, it will contain the following properties:
+| Name   | Type   | Description                                 |
+| ------ | ------ | ------------------------------------------- |
+| `user` | String | Name of the user that registered            |
+| `wiki` | String | Subdomain of the wiki where they registered |
+
 ## Other
-- To get a message's raw content, you can use it's `raw` property
+- To get a message's raw content, you can use its `raw` property
 - Message properties cannot be modified
