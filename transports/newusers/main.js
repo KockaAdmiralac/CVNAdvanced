@@ -82,7 +82,7 @@ class NewUsers extends Transport {
                     if (err1) {
                         main.error(err1);
                     }
-                    conn.release();
+                    conn.destroy();
                 });
             }
         });
