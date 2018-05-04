@@ -1,0 +1,12 @@
+{
+    "authors": [
+        {
+            "name": "KockaAdmiralac",
+            "email": "1405223@gmail.com",
+            "website": "https://github.com/KockaAdmiralac"
+        }
+    ],
+    "name": "Newusers",
+    "description": "New users format",
+    "version": [1, 0, 0]
+}

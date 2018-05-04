@@ -21,13 +21,11 @@ const COMMANDS = [
 
 /**
  * CLI controller class
- * @class CLI
  * @augments Controller
  */
 class CLI extends Controller {
     /**
      * Class constructor
-     * @constructor
      */
     constructor() {
         super();
@@ -35,16 +33,15 @@ class CLI extends Controller {
     }
     /**
      * Initializes the command line
-     * @method _initRead
      * @private
      */
     _initRead() {
         this._read = require('readline').createInterface({
-        	input: process.stdin,
-            output: process.stdout,
+            completer: this._readCompleter,
             historySize: 100,
-            removeHistoryDuplicates: true,
-            completer: this._readCompleter
+            input: process.stdin,
+            output: process.stdout,
+            removeHistoryDuplicates: true
         }).on('line', this._readLine.bind(this))
         .on('close', this._readClose.bind(this));
         this._read.setPrompt('');
@@ -52,24 +49,23 @@ class CLI extends Controller {
     /**
      * Outputs text into console and does additional handling
      * related to it
-     * @method _output
      * @private
      * @param {String} text Text to output
      */
     _output(text) {
-        if(this._initialized) {
+        if (this._initialized) {
             console.log();
         }
         console.log(text.replace(/( |\t)( |\t)+/g, ''));
-        if(this._initialized) {
+        if (this._initialized) {
             this._read.prompt(true);
         }
     }
     /**
      * Autocompletes command input
-     * @method _readCompleter
      * @private
-     * @param {String} line
+     * @param {String} line Current line with commands
+     * @returns {Array<String>} Array of possible options
      */
     _readCompleter(line) {
         const hits = COMMANDS.filter(c => c.startsWith(line));
@@ -78,24 +74,23 @@ class CLI extends Controller {
     /**
      * Lists all names of resources of a specific type
      * (filters, extensions, formats, transports...)
-     * @method _classNames
      * @private
      * @param {String} name Name of the resource
+     * @returns {Array<String>} List of resources
      */
     _classNames(name) {
         return Object.keys(this[`_${name}s`]).join(', ');
     }
     /**
      * Callback after a line is inputted into the console
-     * @method _readLine
      * @private
      * @param {String} line Line that was inputted
      */
     _readLine(line) {
         const args = line.split(' ');
-        switch(args.shift()) {
+        const pkg = require('../../package.json');
+        switch (args.shift()) {
             case 'info':
-                const pkg = require('../../package.json');
                 this._output(`
                 == Package info ==
                 Name: ${pkg.name}
@@ -104,7 +99,9 @@ class CLI extends Controller {
                 Repository: ${pkg.repository.url}
                 == Resources ==
                 Installed filters: ${this._classNames('filter')}
-                Installed extensions: ${this._classNames('extension')}
+                Installed extensions: ${
+                    Object.keys(this._config.extensions || {}).join(', ')
+                }
                 Installed transports: ${this._classNames('transport')}
                 Installed formats: ${this._classNames('format')}
                 `);
@@ -122,7 +119,6 @@ class CLI extends Controller {
     }
     /**
      * Callback after the console stream closes
-     * @method _readClose
      * @private
      */
     _readClose() {
@@ -131,7 +127,6 @@ class CLI extends Controller {
     }
     /**
      * Event called after all resources have loaded
-     * @method _onInit
      * @private
      */
     _onInit() {
@@ -139,7 +134,6 @@ class CLI extends Controller {
     }
     /**
      * Event called when a debug is requested
-     * @method _onDebug
      * @private
      * @param {String} text Text to debug
      */
@@ -151,12 +145,11 @@ class CLI extends Controller {
     }
     /**
      * Event called after an internal error occurs
-     * @method _onError
      * @private
      * @param {String|Error} err Error being thrown
      */
     _onError(err) {
-        if(err instanceof Error) {
+        if (err instanceof Error) {
             this._output(err.stack);
         } else {
             this._output(err);
@@ -164,7 +157,6 @@ class CLI extends Controller {
     }
     /**
      * Event called when a non-fatal unexpected event occurs
-     * @method _onWarn
      * @private
      * @param {String} warning Warning to display
      */
@@ -174,7 +166,6 @@ class CLI extends Controller {
     /**
      * Event called after an error with configuration occurs
      * Closes the program.
-     * @method _onConfigError
      * @private
      * @todo Make this show the actual error in configuration
      */
@@ -188,7 +179,6 @@ class CLI extends Controller {
     }
     /**
      * Event called if a method is called with unexpected parameters
-     * @method _onParameterError
      * @private
      * @param {String} method Method that was called
      */
@@ -200,9 +190,8 @@ class CLI extends Controller {
     }
     /**
      * Event called if an extension doesn't exist
-     * @method _onNoExtension
      * @private
-     * @param {String} extension 
+     * @param {String} extension Extension that doesn't exist
      */
     _onNoExtension(extension) {
         this._output(`
@@ -212,7 +201,6 @@ class CLI extends Controller {
     }
     /**
      * Event called upon joining an IRC channel
-     * @method _onChannelJoin
      * @private
      * @param {String} channel Joined channel
      */
@@ -221,7 +209,6 @@ class CLI extends Controller {
     }
     /**
      * Event called upon joining the IRC server
-     * @method _onServerJoin
      * @private
      */
     _onServerJoin() {
@@ -232,7 +219,6 @@ class CLI extends Controller {
     }
     /**
      * Event called when IRC notice is received
-     * @method _onIrcNotice
      * @private
      * @param {String} nick Nickname of the notice sender
      * @param {String} text Notice contents

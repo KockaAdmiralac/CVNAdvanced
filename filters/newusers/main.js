@@ -11,18 +11,18 @@
 const Filter = require('../filter.js');
 
 /**
- * Example filter class
+ * New users filter class
  * @augments Filter
  */
-class ExampleFilter extends Filter {
+class NewUsersFilter extends Filter {
     /**
      * Determines if the message should be transported
      * @param {Message} message Message to check
      * @returns {Boolean} If the message should be transported
      */
     execute(message) {
-        return Boolean(message.type);
+        return message.type === 'newusers';
     }
 }
 
-module.exports = ExampleFilter;
+module.exports = NewUsersFilter;

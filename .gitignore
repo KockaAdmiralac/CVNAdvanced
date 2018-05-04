@@ -2,3 +2,5 @@ config.json
 node_modules
 npm-debug.log
 log.txt
+test.txt
+test.out.txt

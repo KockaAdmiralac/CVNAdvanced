@@ -1,0 +1,12 @@
+{
+    "authors": [
+        {
+            "name": "KockaAdmiralac",
+            "email": "1405223@gmail.com",
+            "website": "https://github.com/KockaAdmiralac"
+        }
+    ],
+    "name": "Plain Discussions",
+    "description": "For formatting Discussions posts, but in a similar way to how WikiaActivityLogger does it. Only works on Discord",
+    "version": [1, 0, 0]
+}

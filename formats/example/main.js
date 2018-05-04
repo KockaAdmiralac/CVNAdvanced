@@ -16,210 +16,217 @@ const Format = require('../format.js'),
  * Constants
  */
 const USER_TYPE_COLOR = {
+    admin: 0xBADA55,
+    blacklist: 0xFF0000,
+    greylist: 0xFFFF00,
     ip: 0x00FF00,
     user: 0xFF00FF,
-    whitelist: 0x0080FF,
-    blacklist: 0xFF0000,
-    admin: 0xBADA55,
-    greylist: 0xFFFF00
+    whitelist: 0x0080FF
 }, LIST_TYPE = {
-    bl: 'blacklist',
-    wl: 'whitelist',
-    gl: 'greylist',
-    bot: 'bot list',
     al: 'admin list',
     bes: 'bad edit summary list',
+    bl: 'blacklist',
     bna: 'bad new article list',
-    bnu: 'bad new username list'
+    bnu: 'bad new username list',
+    bot: 'bot list',
+    gl: 'greylist',
+    wl: 'whitelist'
 }, LIST_ACTION = {
     add: 'Added to',
     delete: 'Removed from',
-    update: 'Updated on',
-    info: 'Is currently on'
+    info: 'Is currently on',
+    update: 'Updated on'
 }, LIST_COLOR = {
-    bl: 0x000000,
-    wl: 0xFFFFFF,
-    gl: 0xAAAAAA,
-    bot: 0xDDDDDD,
     al: 0x00FF00,
     bes: 0xFF5500,
+    bl: 0x000000,
     bna: 0xFF1188,
-    bnu: 0xFF44AA
+    bnu: 0xFF44AA,
+    bot: 0xDDDDDD,
+    gl: 0xAAAAAA,
+    wl: 0xFFFFFF
 };
 
 /**
  * Main class
- * @class ExampleFormat
  * @augments Format
  */
 class ExampleFormat extends Format {
     /**
      * Main class method
-     * @method execute
+     * @param {Transport} transport Transport transporting the message
      * @param {Message} msg Message to format
-     * @return {Object} Formatted embed
+     * @returns {Object} Formatted embed
      */
     execute(transport, msg) {
-        if(msg.type === 'discussions') {
+        if (!['edit', 'list', 'block', 'upload'].includes(msg.type)) {
             return;
         }
-        switch(transport.constructor.name) {
+        switch (transport.constructor.name) {
             case 'Discord':
-                return { embeds: [ this[`_embed${util.cap(msg.type)}`](msg) ] };
+                return {embeds: [this[`_embed${util.cap(msg.type)}`](msg)]};
             default:
                 main.hook('parameterError');
         }
     }
     /**
      * Formats an embed if it's an edit
-     * @method _embedEdit
      * @private
      * @param {Message} msg Message to format
-     * @return {Object} Formatted embed
+     * @returns {Object} Formatted embed
      */
     _embedEdit(msg) {
         return {
-            title: msg.userType,
-            description: this._editDescription(msg),
-            color: this._editColor(msg),
             author: {
                 name: `${msg.user} [${msg.wiki}]`,
                 url: this._userURL(msg)
-            }
+            },
+            color: this._editColor(msg),
+            description: this._editDescription(msg),
+            title: msg.userType
         };
     }
     /**
      * Formats the embed if it's a list action
-     * @method _embedList
      * @private
      * @param {Message} msg Message to format
-     * @return {Object} Formatted embed
+     * @returns {Object} Formatted embed
      */
     _embedList(msg) {
         return {
-            title: `${LIST_ACTION[msg.action]} ${LIST_TYPE[msg.list]}`,
-            description: msg.addedBy && msg.length && msg.reason ?
-                `By ${msg.addedBy} until ${msg.length} ${this._summary(msg)}` :
-                undefined,
-            color: LIST_COLOR[msg.list],
             author: {
                 name: msg.user,
                 url: this._userURL(msg)
-            }
+            },
+            color: LIST_COLOR[msg.list],
+            description: msg.addedBy && msg.length && msg.reason ?
+                `By ${msg.addedBy} until ${msg.length} ${this._summary(msg)}` :
+                undefined,
+            title: `${LIST_ACTION[msg.action]} ${LIST_TYPE[msg.list]}`
         };
     }
     /**
      * Formats the embed if it's a block
-     * @method _embedBlock
      * @private
      * @param {Message} msg Message to format
-     * @return {Object} Formatted embed
+     * @returns {Object} Formatted embed
      */
     _embedBlock(msg) {
         const block = msg.action === 'block';
         return {
-            title: `${block ? 'Blocked' : 'Unblocked'} by ${msg.user}`,
+            author: {
+                name: msg.target,
+                url: this._userURL(msg, 'target')
+            },
             description: block ?
                 `For ${msg.length} ${this._summary(msg)}` :
                 this._summary(msg),
+            title: `${block ? 'Blocked' : 'Unblocked'} by ${msg.user}`,
+            url: this._userURL(msg)
+        };
+    }
+    /**
+     * Formats the embed if it's a file upload
+     * @private
+     * @param {Message} msg Message to format
+     * @returns {Object} Formatted embed
+     */
+    _embedUpload(msg) {
+        return {
             author: {
-                name: msg.target,
+                name: msg.user,
                 url: this._userURL(msg)
-            }
+            },
+            description: `${
+                msg.reupload ? 'Reuploaded' : 'Uploaded'
+            } ${
+                this._makeURL(
+                    msg.wiki,
+                    `${msg.namespace}:${msg.title}`,
+                    msg.title
+                )
+            } (${this._makeURL(msg.wiki, 'wiki/Special:Log/upload', 'log')})`
         };
     }
     /**
      * Formats the embed description if it's an edit
-     * @method _editDescription
      * @private
      * @param {Message} msg Message to format
-     * @return {String} Embed description
+     * @returns {String} Embed description
      */
     _editDescription(msg) {
-        switch(msg.action) {
-            case 'edit': return `Edited ${this._makePageURL(msg)} (${this._diffSize(msg)}) {${this._makeDiffURL(msg)}} ${this._notices(msg)} ${this._summary(msg)}`;
-            case 'create': return `Created ${this._makePageURL(msg)} (${this._diffSize(msg)}) ${this._notices(msg)} ${this._summary(msg)}`;
-            case 'log': return `Log action \`${msg.log}\` ${this._notices(msg)} ${this._summary(msg)}`;
+        switch (msg.action) {
+            case 'edit':
+                return `Edited ${this._makePageURL(msg)} (${this._diffSize(msg)}) {${this._makeDiffURL(msg)}} ${this._notices(msg)} ${this._summary(msg)}`;
+            case 'create':
+                return `Created ${this._makePageURL(msg)} (${this._diffSize(msg)}) ${this._notices(msg)} ${this._summary(msg)}`;
+            case 'log':
+                return `Log action \`${msg.log}\` ${this._notices(msg)} ${this._summary(msg)}`;
+            default:
+                return 'Something really bad happened';
         }
     }
     /**
      * Returns the embed color if it's an edit
-     * @method _editColor
      * @private
      * @param {Message} msg Message to format
-     * @return {Number} Embed color
+     * @returns {Number} Embed color
      */
     _editColor(msg) {
-        switch(msg.action) {
+        switch (msg.action) {
             case 'edit':
             case 'create':
-                if(msg.diffSize < -1500 || msg.diffSize > 10000) {
+                if (msg.diffSize < -1500 || msg.diffSize > 10000) {
                     return 0xFF0000;
-                } else if(msg.watched) {
+                } else if (msg.watched) {
                     return 0xFFFF00;
-                } else {
-                    return USER_TYPE_COLOR[msg.userType];
                 }
-                break;
+                return USER_TYPE_COLOR[msg.userType];
             case 'log': return USER_TYPE_COLOR[msg.userType];
+            default: return 'Something bad happened';
         }
     }
     /**
      * Formats a Markdown URL
-     * @method _makeURL
      * @private
      * @param {String} wiki Wiki subdomain
      * @param {String} page Page name
      * @param {String} text Text in the URL, defaults to page name
-     * @return {String} Markdown URL
+     * @returns {String} Markdown URL
      */
     _makeURL(wiki, page, text) {
-        return `[${text || page}](http://${wiki}.wikia.com/${page})`;
-    }
-    /**
-     * Encodes a page title to fit in a Markdown URL properly
-     * @method _encodePageTitle
-     * @private
-     * @param {String} title Page title to encode
-     * @return {String} Encoded page title
-     */
-    _encodePageTitle(title) {
-        return encodeURIComponent(title.replace(/ /g, '_'))
-            .replace(/\)/g, '%29');
+        return `[${text || page}](${util.wiki(wiki)}/${page})`;
     }
     /**
      * Creates a Markdown URL to a wiki page
-     * @method _makePageURL
      * @private
      * @param {Message} msg Message to format
-     * @return {String} Markdown URL
+     * @returns {String} Markdown URL
      */
     _makePageURL(msg) {
         const t = msg.title;
-        return this._makeURL(msg.wiki, `wiki/${this._encodePageTitle(t)}`, t);
+        return this._makeURL(msg.wiki, `wiki/${util.encode(t)}`, t);
     }
     /**
      * Creates a Markdown URL to a diff page
-     * @method _makeDiffURL
      * @private
      * @param {Message} msg Message to format
-     * @return {String} Markdown URL
+     * @returns {String} Markdown URL
      */
     _makeDiffURL(msg) {
         return this._makeURL(msg.wiki, `?diff=${msg.urlParams.diff}`, 'diff');
     }
     /**
      * Formats an edit summary
-     * @method _summary
      * @private
      * @param {Message} msg Message to format
-     * @return {String} Formatted edit summary
+     * @returns {String} Formatted edit summary
      */
     _summary(msg) {
         const text = msg.summary || msg.reason;
-        if(text) {
+        if (text) {
             const trim = text.trim();
-            if(trim && trim !== '""') {
+            if (trim && trim !== '""') {
                 return `(*${trim}*)`;
             }
         }
@@ -227,48 +234,46 @@ class ExampleFormat extends Format {
     }
     /**
      * Shows if a watched summary was used, page was blanked or replaced
-     * @method _notices
      * @private
      * @param {Message} msg Message to format
-     * @return {String} Formatted edit summary
+     * @returns {String} Formatted edit summary
      */
     _notices(msg) {
-        if(msg.watched) {
+        if (msg.watched) {
             return `**watched edit summary** "${msg.watched}"`;
-        } else if(msg.blanked) {
-            return `**page blanked**`;
-        } else if(msg.replace) {
+        } else if (msg.blanked) {
+            return '**page blanked**';
+        } else if (msg.replace) {
             return `**replaced with** "${msg.replace}"`;
         }
         return '';
     }
     /**
      * Formats the diff size number
-     * @method _diffSize
      * @private
      * @param {Message} msg Message to format
-     * @return {String} Formatted diff size number
+     * @returns {String} Formatted diff size number
      */
     _diffSize(msg) {
         const size = msg.diffSize;
         let res = size;
-        if(size > 0) {
+        if (size > 0) {
             res = `+${res}`;
         }
-        if(size > 1000 || size < -1000) {
+        if (size > 1000 || size < -1000) {
             res = `*${res}*`;
         }
         return res;
     }
     /**
      * Makes an URL to user's contributions page on a wiki
-     * @method _userURL
      * @private
      * @param {Message} msg Message to format
-     * @return {String} URL to user's contributions
+     * @param {String} prop Property out of which to take the user
+     * @returns {String} URL to user's contributions
      */
-    _userURL(msg) {
-        return `http://${msg.wiki || 'c'}.wikia.com/wiki/Special:Contribs/${encodeURIComponent(msg.user)}`;
+    _userURL(msg, prop) {
+        return `${util.wiki(msg.wiki)}/wiki/Special:Contribs/${util.encode(msg[prop || 'user'])}`;
     }
 }
 
