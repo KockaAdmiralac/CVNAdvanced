@@ -16,4 +16,3 @@ laundry machines and probably many more I can't remember at this time.
 - Secure connection to IRC
 - More efficient hook handling
 - `Error: write after end` when stopping/restarting through commands
-- Eliminate EventEmitter memory leak warning in newusers transport
