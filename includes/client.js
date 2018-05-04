@@ -28,6 +28,7 @@ const EVENTS = [
 ], CHANNELS = [
     'cvn-wikia',
     'cvn-wikia-newusers',
+    'cvn-wikia-uploads',
     'wikia-discussions',
     'wikia-spam'
 ];

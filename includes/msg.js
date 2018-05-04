@@ -18,8 +18,9 @@ const util = require('./util.js');
 /* eslint-disable */
 const REGEX = {
     discussions: /^\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[(.*)\]\])?(?: \((\d+)\))? https?:\/\/(.+)\.wikia\.com\/d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/,
-    spam: /^(COI(\d+)|HIT) \((\d(?:\.\d{1,2})?|direct|!)\) \[\[User:([^\]]+)\]\] (created|created wiki|edited) https?:\/\/(.+)\.wikia\.com\/(?:index\.php\?oldid=(\d+))?(?: (with title|with URL|matching filter) ([^,]+)(?:, filter (.+)$)?)?/g,
+    spam: /^COI(\d+) \((\d(?:\.\d{1,2})?|!)(?:, (\d+))?\) \[\[User:([^\]]+)\]\] (created|created wiki|edited) https?:\/\/(.+)\.wikia\.com\/(?:index\.php\?oldid=(\d+)|d\/p\/(\d{19,})(?:\/r\/(\d{19,}))?|Talk:([^\s]+))?(?: (with title|with URL|with title|with summary|matching filter|matching criteria:) ([^,]+)(?:, filter (.+), #(\d+)$|, main page created by \[\[User:([^\]]+)\]\]$)?)?/g,
     newusers: /^(.*) New user registration https?:\/\/(.*)\.wikia\.com\/wiki\/Special:Log\/newusers - https?:\/\/.*\.wikia\.com\/wiki\/Special:Contributions\/.*/g,
+    uploads: /^New (upload|reupload) \[\[User:([^\]]+)\]\] https?:\/\/(.+)\.wikia\.com\/wiki\/Special:Log\/upload \[\[([^:]+):([^\]]+)\]\]$/g,
     edit: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked)( watched)? \[\[([^\]]+)\]\] \(([+-\d]+)\) (URL|Diff): https?:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g,
     replace: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([+-\d]+)\) Diff: https?:\/\/([^\s]+)\.wikia\.com\/\?([^\s]+)/g,
     block: /^(Block|Unblock) [eE]ditor \[\[User:([^\]]+)\]\] (?:blocked|unblocked) by admin \[\[User:([^\]]+)\]\] (?:Length: (.*) )*"([^"]+)"/g,
@@ -76,6 +77,17 @@ class Message {
                 this[`_handle${util.cap(i)}`](res);
                 break;
             }
+        }
+    }
+    /**
+     * Debugs text into appropriate place
+     * @param {String} text Text to debug
+     */
+    _debug(text) {
+        if (global.main) {
+            main.debug(text);
+        } else {
+            console.log(text);
         }
     }
     /**
@@ -207,7 +219,7 @@ class Message {
                     this.watched = watchWord;
                     return 'create';
                 }
-                main.debug(`
+                this._debug(`
                     No action recognized!
                     Action: ${action}
                     Summary: ${summary}
@@ -286,25 +298,61 @@ class Message {
      */
     _handleSpam(res) {
         this.type = 'spam';
-        this.spamtype = res.shift().toLowerCase() === 'hit' ? 'hit' : 'coi';
         this.coi = Number(res.shift());
         const percent = res.shift();
-        this.percent = percent === 'direct' || percent === '!' ?
+        this.percent = percent === '!' ?
             1 : Number(percent);
+        this.coitype = Number(res.shift());
         this.user = res.shift();
         this.action = SPAM_ACTIONS[res.shift()];
         this.wiki = res.shift();
         this.oldid = Number(res.shift());
-        const additional = res.shift();
-        if (additional === 'with title') {
-            this.title = res.shift();
-        } else if (additional === 'with URL') {
-            this.url = res.shift();
-        } else if (additional === 'matching filter') {
-            this.filter = Number(res.shift().substring(1));
+        this.thread = res.shift();
+        this.reply = res.shift();
+        this.talkpage = decodeURIComponent(res.shift());
+        this._handleAdditional(res.shift(), res.shift());
+        const content = res.shift(),
+              filter = res.shift();
+        if (!this.filter && filter && content) {
+            this.content = content;
+            this.filter = Number(filter);
         }
-        if (!this.filter) {
-            this.filter = res.shift();
+        this.mainUser = res.shift();
+    }
+    /**
+     * Handles additional content with the spam filter hitting
+     * @param {String} type Type of the additional content
+     * @param {String} content Additional content
+     */
+    _handleAdditional(type, content) {
+        switch (type) {
+            case 'with title':
+                this.title = content;
+                break;
+            case 'with URL':
+                this.url = content;
+                break;
+            case 'with summary':
+                this.summary = content;
+                break;
+            case 'matching filter':
+                this.filter = Number(content.substring(1));
+                break;
+            case 'matching criteria:':
+                if (content === 'IP and title equals summary') {
+                    this.xrumer = true;
+                } else {
+                    this._debug(`Unknown criteria: ${content}`);
+                }
+                break;
+            case undefined:
+                break;
+            default:
+                this._debug(`
+                    No additional content recognized!
+                    Additional: ${content}
+                `);
+                break;
         }
     }
     /**
@@ -316,6 +364,19 @@ class Message {
         this.type = 'newusers';
         this.user = res.shift();
         this.wiki = res.shift();
+    }
+    /**
+     * Handles new file upload messages
+     * @private
+     * @param {Array} res Regular expression execution result
+     */
+    _handleUploads(res) {
+        this.type = 'upload';
+        this.reupload = res.shift() === 'reupload';
+        this.user = res.shift();
+        this.wiki = res.shift();
+        this.namespace = res.shift();
+        this.file = res.shift();
     }
 }
 

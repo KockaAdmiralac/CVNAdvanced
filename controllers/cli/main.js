@@ -99,7 +99,9 @@ class CLI extends Controller {
                 Repository: ${pkg.repository.url}
                 == Resources ==
                 Installed filters: ${this._classNames('filter')}
-                Installed extensions: ${this._classNames('extension')}
+                Installed extensions: ${
+                    Object.keys(this._config.extensions || {}).join(', ')
+                }
                 Installed transports: ${this._classNames('transport')}
                 Installed formats: ${this._classNames('format')}
                 `);

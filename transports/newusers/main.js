@@ -75,13 +75,14 @@ class NewUsers extends Transport {
             if (err) {
                 main.error(err);
             } else {
-                conn.on('error', function() {
+                conn.once('error', function() {
                     main.error('[newusers] `error` event fired!');
                 });
                 conn.query(QUERY, [user, wiki], function(err1) {
                     if (err1) {
                         main.error(err1);
                     }
+                    conn.release();
                 });
             }
         });

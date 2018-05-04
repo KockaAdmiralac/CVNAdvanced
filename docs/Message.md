@@ -9,6 +9,7 @@ There are three message types, stored in the `type` property of a Message object
 - `discussions` - If the message represents a Discussions event
 - `spam` - If the message represents possible spam
 - `newusers` - If the message represents a new user registering
+- `upload` - If the message represents a new file being uploaded
 
 ### Edit
 If the message represents an edit, it can be one of three actions, stored in the `action` property:
@@ -95,29 +96,42 @@ It can also contain the following properties:
 If the message represents possible spam, it will have a `spamtype` property which can be set to either `coi` or `hit`,
 depending on if the user hit one of the Conflict of Interest filters or the spam blacklist.
 
-Meanings of spam filters are as following:
-- `COI1` - User inserted a link that matches their username
-- `COI2` - Wiki URL matches its founder's username
-- `COI3` - Wiki name matches its founder's username
-- `COI4` - User inserted a link into their newfounded wiki too soon
-- `COI5` - Content of a newly created page matches spam filter
-- `HIT` - Link blacklist
+Meanings of spam filters are as following (names in braces are what spam filters are going to get renamed to in future):
+- `COI1`
+    - User inserted a link that matches their username (`URL`)
+    - Anonymous user created a page with the same title and summary (`XRM`)
+    - User with a small editcount created a thread on their wall with an external link (`THR`)
+- `COI2` (`COI`) - Wiki URL matches its founder's username
+- `COI3` (`COI`) - Wiki name matches its founder's username
+- `COI4` (`WUR`) - User inserted a link into their newfounded wiki too soon
+- `COI5` (`FLT`) - Content of a newly created page matches title, summary or content filter
+- `COI6` (`ANS`) - Checks when a user inserts a link on a talkpage on an Answers wiki and also reports
+  the main page's creator
+
 It will also have an `action` property which represents what did the user do when they hit the filter:
 - `edit` - The user was editing a page
 - `create` - The user was creating a page
 - `wiki` - The user was creating a wiki
 It can also contain the following properties:
 
-| Name      | Type    | Description                               | Present if                     |
-| --------- | ------- | ----------------------------------------- | ------------------------------ |
-| `coi`     | Integer | Number of the Conflict of Interest filter | Conflict of Interest happened  |
-| `percent` | Float   | How much the action matched the filter    | Always                         |
-| `user`    | String  | User that hit the filter                  | Always                         |
-| `wiki`    | String  | On which wiki was the action attempted    | Always                         |
-| `oldid`   | Integer | ID of the revision                        | Page was created               |
-| `title`   | String  | Title of the page                         | Wiki was created               |
-| `url`     | String  | URL that was inserted                     | Page was created               |
-| `filter`  | Integer | Filter that was hit                       | Blacklist or COI5 has been hit |
+| Name       | Type    | Description                               | Present if                     |
+| ---------- | ------- | ----------------------------------------- | ------------------------------ |
+| `coi`      | Integer | Number of the Conflict of Interest filter | Always                         |
+| `percent`  | Float   | How much the action matched the filter    | Always                         |
+| `coitype`  | Number  | Type of the `COI5` filter                 | `coi` is 5                     |
+| `user`     | String  | User that hit the filter                  | Always                         |
+| `wiki`     | String  | On which wiki was the action attempted    | Always                         |
+| `oldid`    | Integer | ID of the revision                        | Page was created               |
+| `thread`   | String  | ID of the Discussions thread              | Filter was hit on Discussions  |
+| `reply`    | String  | ID of the Discussions reply               | Filter was hit on Discussions  |
+| `talkpage` | String  | Name of the talkpage                      | `coi` is 6                     |
+| `title`    | String  | Title of the page                         | `COI5.2` was hit               |
+| `url`      | String  | URL that was inserted                     | `COI5.4` was hit               |
+| `summary`  | String  | Summary that was used                     | `COI5.3` was hit               |
+| `xrumer`   | Boolean | If XRumer spam (`XRM`) has been detected  | Always                         |
+| `filter`   | Integer | Filter that was hit                       | `coi` is 5                     |
+| `content`  | String  | Content of the filter that was hit        | `coi` is 5                     |
+| `mainUser` | String  | Second user involved in `ANS` spam        | `coi` is 6                     |
 
 ### New users
 If the message represents a user that just registered, it will contain the following properties:
@@ -125,6 +139,16 @@ If the message represents a user that just registered, it will contain the follo
 | ------ | ------ | ------------------------------------------- |
 | `user` | String | Name of the user that registered            |
 | `wiki` | String | Subdomain of the wiki where they registered |
+
+### Uploads
+If the message represents a new file being uploaded, it will contain the following properties:
+| Name        | Type    | Description                                       |
+| ----------- | ------- | ------------------------------------------------- |
+| `reupload`  | Boolean | `true` if the file has been reuploaded            |
+| `user`      | String  | User who uploaded the file                        |
+| `wiki`      | String  | Subdomain of the wiki where the file was uploaded |
+| `namespace` | String  | Name of the file namespace on the wiki            |
+| `file`      | String  | Filename of the uploaded file                     |
 
 ## Other
 - To get a message's raw content, you can use its `raw` property

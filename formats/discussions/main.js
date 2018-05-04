@@ -1,7 +1,7 @@
 /**
  * main.js
  *
- * Module for example format
+ * Module for the Discussions format
  */
 /* jshint maxlen: 200 */
 'use strict';
@@ -44,14 +44,14 @@ class DiscussionsFormat extends Format {
                 {
                     author: {
                         name: `${msg.user} [${msg.wiki}]`,
-                        url: `https://${msg.wiki || 'c'}.wikia.com/wiki/Special:Contribs/${util.encode(msg.user)}`
+                        url: `${util.wiki(msg.wiki)}/wiki/Special:Contribs/${util.encode(msg.user)}`
                     },
                     color: COLOR[msg.target],
                     description: msg.summary,
                     title: msg.title ?
                         `${msg.title} [${this._processAction(msg)}]` :
                         this._processAction(msg),
-                    url: `https://${msg.wiki}.wikia.com/d/p/${msg.replyId ?
+                    url: `${util.wiki(msg.wiki)}/d/p/${msg.replyId ?
                              `${msg.threadId}/r/${msg.replyId}` :
                              msg.threadId
                     }`

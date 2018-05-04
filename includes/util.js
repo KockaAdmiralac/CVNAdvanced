@@ -111,6 +111,16 @@ class Util {
             .replace(/%3A/g, ':')
             .replace(/%2F/g, '/');
     }
+    /**
+     * Gets a URL to a Wikia wiki
+     * @static
+     * @param {String} wiki Subdomain of the wiki
+     * @returns {String} Link to the wiki
+     */
+    static wiki(wiki) {
+        const w = wiki || 'c';
+        return `${w.includes('.') ? 'http' : 'https'}://${w}.wikia.com`;
+    }
 }
 
 module.exports = Util;

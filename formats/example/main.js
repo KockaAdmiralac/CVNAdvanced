@@ -59,7 +59,7 @@ class ExampleFormat extends Format {
      * @returns {Object} Formatted embed
      */
     execute(transport, msg) {
-        if (!['edit', 'list', 'block'].includes(msg.type)) {
+        if (!['edit', 'list', 'block', 'upload'].includes(msg.type)) {
             return;
         }
         switch (transport.constructor.name) {
@@ -116,12 +116,36 @@ class ExampleFormat extends Format {
         return {
             author: {
                 name: msg.target,
-                url: this._userURL(msg)
+                url: this._userURL(msg, 'target')
             },
             description: block ?
                 `For ${msg.length} ${this._summary(msg)}` :
                 this._summary(msg),
-            title: `${block ? 'Blocked' : 'Unblocked'} by ${msg.user}`
+            title: `${block ? 'Blocked' : 'Unblocked'} by ${msg.user}`,
+            url: this._userURL(msg)
+        };
+    }
+    /**
+     * Formats the embed if it's a file upload
+     * @private
+     * @param {Message} msg Message to format
+     * @returns {Object} Formatted embed
+     */
+    _embedUpload(msg) {
+        return {
+            author: {
+                name: msg.user,
+                url: this._userURL(msg)
+            },
+            description: `${
+                msg.reupload ? 'Reuploaded' : 'Uploaded'
+            } ${
+                this._makeURL(
+                    msg.wiki,
+                    `${msg.namespace}:${msg.title}`,
+                    msg.title
+                )
+            } (${this._makeURL(msg.wiki, 'wiki/Special:Log/upload', 'log')})`
         };
     }
     /**
@@ -171,7 +195,7 @@ class ExampleFormat extends Format {
      * @returns {String} Markdown URL
      */
     _makeURL(wiki, page, text) {
-        return `[${text || page}](https://${wiki}.wikia.com/${page})`;
+        return `[${text || page}](${util.wiki(wiki)}/${page})`;
     }
     /**
      * Creates a Markdown URL to a wiki page
@@ -245,10 +269,11 @@ class ExampleFormat extends Format {
      * Makes an URL to user's contributions page on a wiki
      * @private
      * @param {Message} msg Message to format
+     * @param {String} prop Property out of which to take the user
      * @returns {String} URL to user's contributions
      */
-    _userURL(msg) {
-        return `https://${msg.wiki || 'c'}.wikia.com/wiki/Special:Contribs/${util.encode(msg.user)}`;
+    _userURL(msg, prop) {
+        return `${util.wiki(msg.wiki)}/wiki/Special:Contribs/${util.encode(msg[prop || 'user'])}`;
     }
 }
 
