@@ -29,17 +29,15 @@ const RESOURCES = [
 
 /**
  * Resource loader class
- * @class Loader
  */
 class Loader {
     /**
      * Loads resources and ruins a callback function
-     * @constructor
      * @param {Function} callback Callback function
      * @param {Object} context Context to bind the callback to
      */
     load(callback, context) {
-        if(typeof callback !== 'function') {
+        if (typeof callback !== 'function') {
             main.hook('parameterError', 'Loader#load');
         }
         this._loadConfig();
@@ -56,23 +54,22 @@ class Loader {
     }
     /**
      * Loads configuration
-     * @method _loadConfig
      * @private
      */
     _loadConfig() {
+        // eslint-disable-next-line
         util.safeRun(() => this._config = require('../config.json'), this);
     }
     /**
      * Returns a Promise for reading a directory
-     * @method _readDir
      * @private
      * @param {String} dir Directory to read
-     * @return {Promise} Promise on which to listen for directory listing
+     * @returns {Promise} Promise on which to listen for directory listing
      */
     _readDir(dir) {
         return new Promise(function(resolve, reject) {
             fs.readdir(dir, function(error, files) {
-                if(error) {
+                if (error) {
                     main.error(error);
                     reject(error);
                 } else {
@@ -83,7 +80,6 @@ class Loader {
     }
     /**
      * Loads a specified resource
-     * @method _loadResource
      * @private
      * @param {String} name Resource to load
      * @todo Fix extension loading inconsistencies
@@ -91,22 +87,22 @@ class Loader {
     _loadResource(name) {
         this[`_${name}s`] = {};
         const dir = `../${name}s`;
-        this._promises.push(this._readDir(`${name}s`).then((function(files) {
+        this._promises.push(this._readDir(`${name}s`).then(function(files) {
             files.filter(f => f !== `${name}.js`).forEach(function(file) {
                 const res = require(`${dir}/${file}/main.js`),
                       data = require(`${dir}/${file}/main.json`);
-                if(typeof data !== 'object') {
+                if (typeof data !== 'object') {
                     throw new Error(`Loading data for \`${file}\` failed`);
                 }
                 REQUIRED_PARAMS.forEach(function(param) {
-                    if(!data[param]) {
+                    if (!data[param]) {
                         main.warn(`Incomplete data in \`${file}\``);
                     }
                 });
                 res.prototype.data = data;
-                this[`_${name}s`][file] = res;                
+                this[`_${name}s`][file] = res;
             }, this);
-        }).bind(this)));
+        }.bind(this)));
     }
 }
 

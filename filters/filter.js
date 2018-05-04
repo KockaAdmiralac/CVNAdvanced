@@ -7,12 +7,10 @@
 
 /**
  * Base filter class
- * @class Filter
  */
 class Filter {
     /**
      * Class constructor
-     * @constructor
      * @param {String} name Filter name
      * @param {Object} config Filter configuration
      */
@@ -22,11 +20,11 @@ class Filter {
     }
     /**
      * Determines if the message should be transported
-     * @method execute
      * @param {Message} message Message to check
-     * @return {Boolean} If the message should be transported
+     * @returns {Boolean} If the message should be transported
      */
-    execute(message) { // jshint ignore: line
+    // eslint-disable-next-line
+    execute(message) {
         // To be implemented by other filters
         return false;
     }

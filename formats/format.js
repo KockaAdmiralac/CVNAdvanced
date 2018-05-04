@@ -7,17 +7,15 @@
 
 /**
  * Main class
- * @class Filter
  */
 class Filter {
     /**
      * Main class method
-     * @method execute
      * @param {Transport} transport Transport to use
      * @param {Message} msg Message to format
      */
-    execute(transport, msg) { // jshint ignore: line
-        return;
+    // eslint-disable-next-line
+    execute(transport, msg) {
     }
 }
 

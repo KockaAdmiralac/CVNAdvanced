@@ -15,40 +15,47 @@ const util = require('./util.js');
  * If you wanted to debug this you might as well just kill yourself right now
  * @todo Move this to a JSON file?
  */
+/* eslint-disable */
 const REGEX = {
-    discussions: /\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[(.*)\]\])?(?: \((\d+)\))? http:\/\/(.+)\.wikia\.com\/d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/, // jshint ignore:line
-    edit: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked)( watched)? \[\[([^\]]+)\]\] \(([\+-\d]+)\) (URL|Diff): http:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g, // jshint ignore:line
-    replace: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([\+-\d]+)\) Diff: http:\/\/([^\s]+)\.wikia\.com\/\?([^\s]+)/g, // jshint ignore:line
-    block: /^(Block|Unblock) [eE]ditor \[\[User:([^\]]+)\]\] (?:blocked|unblocked) by admin \[\[User:([^\]]+)\]\] (?:Length: (.*) )*"([^"]+)"/g, // jshint ignore:line
+    discussions: /^\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[(.*)\]\])?(?: \((\d+)\))? https?:\/\/(.+)\.wikia\.com\/d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/,
+    spam: /^COI(\d+) \((\d(?:\.\d{1,2})?|!)(?:, (\d+))?\) \[\[User:([^\]]+)\]\] (created|created wiki|edited) https?:\/\/(.+)\.wikia\.com\/(?:index\.php\?oldid=(\d+)|d\/p\/(\d{19,})(?:\/r\/(\d{19,}))?|Talk:([^\s]+))?(?: (with title|with URL|with title|with summary|matching filter|matching criteria:) ([^,]+)(?:, filter (.+), #(\d+)$|, main page created by \[\[User:([^\]]+)\]\]$)?)?/g,
+    newusers: /^(.*) New user registration https?:\/\/(.*)\.wikia\.com\/wiki\/Special:Log\/newusers - https?:\/\/.*\.wikia\.com\/wiki\/Special:Contributions\/.*/g,
+    uploads: /^New (upload|reupload) \[\[User:([^\]]+)\]\] https?:\/\/(.+)\.wikia\.com\/wiki\/Special:Log\/upload \[\[([^:]+):([^\]]+)\]\]$/g,
+    edit: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked)( watched)? \[\[([^\]]+)\]\] \(([+-\d]+)\) (URL|Diff): https?:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g,
+    replace: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([+-\d]+)\) Diff: https?:\/\/([^\s]+)\.wikia\.com\/\?([^\s]+)/g,
+    block: /^(Block|Unblock) [eE]ditor \[\[User:([^\]]+)\]\] (?:blocked|unblocked) by admin \[\[User:([^\]]+)\]\] (?:Length: (.*) )*"([^"]+)"/g,
     // Add proper messages for bna
-    list: /^(?:(Added|Updated): )*(.*) is on (global whitelist|global blacklist|global greylist|rc bot list|rc admin list|bad edit summary list|bad new articles list|bad new usernames list), added by (.*) until (.*) \("(.*)"\)$/g, // jshint ignore:line
-    listRemove: /^Deleted (.*) from (global whitelist|global blacklist|rc bot list|rc admin list|bad edit summary list)$/g, // jshint ignore:line
-    noList: /^(.*) is not on (global whitelist|global blacklist|rc bot list|rc admin list|bad edit summary list)$/g // jshint ignore:line
+    list: /^(?:(Added|Updated): )*(.*) is on (global whitelist|global blacklist|global greylist|rc bot list|rc admin list|bad edit summary list|bad new articles list|bad new usernames list), added by (.*) until (.*) \("(.*)"\)$/g,
+    listRemove: /^Deleted (.*) from (global whitelist|global blacklist|rc bot list|rc admin list|bad edit summary list)$/g,
+    noList: /^(.*) is not on (global whitelist|global blacklist|rc bot list|rc admin list|bad edit summary list)$/g
 };
+/* eslint-enable */
 
 /**
  * Lists a user can be in
  * @todo Move this to a JSON file?
  */
 const LISTS = {
-    'global blacklist': 'bl',
-    'global whitelist': 'wl',
-    'global greylist': 'gl',
-    'rc bot list': 'bot',
-    'rc admin list': 'al',
     'bad edit summary list': 'bes',
-    'bad new articles list': 'bna', // article???
-    'bad new usernames list': 'bnu' // username???
+    'bad new articles list': 'bna',
+    'bad new usernames list': 'bnu',
+    'global blacklist': 'bl',
+    'global greylist': 'gl',
+    'global whitelist': 'wl',
+    'rc admin list': 'al',
+    'rc bot list': 'bot'
+}, SPAM_ACTIONS = {
+    'created': 'page',
+    'created wiki': 'wiki',
+    'edited': 'edit'
 };
 
 /**
  * Class handling all message parsing logic
- * @class Message
  */
 class Message {
     /**
      * Class constructor
-     * @constructor
      * @param {String} message Message to parse
      */
     constructor(message) {
@@ -58,27 +65,33 @@ class Message {
     }
     /**
      * Determines the message type and passes regex result to further methods
-     * @method _initType
      * @private
      */
     _initType() {
-        let hit = false;
-        util.each(REGEX, function(k, v) {
-            if(hit) {
-                return;
-            }
-            let res = v.exec(this.raw);
+        for (const i in REGEX) {
+            const v = REGEX[i],
+                  res = v.exec(this.raw);
             v.lastIndex = 0;
-            if(res) {
-                hit = true;
+            if (res) {
                 res.shift();
-                this[`_handle${util.cap(k)}`](res);
+                this[`_handle${util.cap(i)}`](res);
+                break;
             }
-        }, this);
+        }
+    }
+    /**
+     * Debugs text into appropriate place
+     * @param {String} text Text to debug
+     */
+    _debug(text) {
+        if (global.main) {
+            main.debug(text);
+        } else {
+            console.log(text);
+        }
     }
     /**
      * Handles message parsing in case the message was an edit sign
-     * @method _handleEdit
      * @private
      * @param {Array} res Regular expression execution result
      */
@@ -90,7 +103,7 @@ class Message {
         this.watchlist = Boolean(res.shift());
         this.title = res.shift();
         this.diffSize = Number(res.shift());
-        if(res.shift() === 'URL') {
+        if (res.shift() === 'URL') {
             this.action = 'create';
         }
         this.wiki = res.shift();
@@ -99,7 +112,6 @@ class Message {
     }
     /**
      * Handles message parsing in case the message was a replacement sign
-     * @method _handleReplace
      * @private
      * @param {Array} res Regular expression execution result
      */
@@ -113,7 +125,6 @@ class Message {
     }
     /**
      * Handles message parsing in case the message was a block sign
-     * @method _handleBlock
      * @private
      * @param {Array} res Regular expression execution result
      */
@@ -127,7 +138,6 @@ class Message {
     }
     /**
      * Handles message parsing in case the message was a list modification sign
-     * @method _handleList
      * @private
      * @param {Array} res Regular expression execution result
      */
@@ -148,7 +158,6 @@ class Message {
     }
     /**
      * Handles message parsing in case the message was a list removal sign
-     * @method _handleListRemove
      * @private
      * @param {Array} res Regular expression execution result
      */
@@ -161,18 +170,86 @@ class Message {
     /**
      * Handles message parsing in case the message was a sign of negation of
      * a member's existence in a list
-     * @method _handleReplace
      * @private
      * @param {Array} res Regular expression execution result
      * @todo Word this description better
-     * @todo Make this not a noop or insert an actual shrug in the comment
+     * @todo Make this not a noop
      */
     _handleNoList() {
-        // shrug
+        // ¯\_(ツ)_/¯
+    }
+    /**
+     * Handles some parsing logic in edit-related messages
+     * @private
+     * @param {String} type A user's type
+     * @param {String} name User's name
+     */
+    _handleEditBase(type, name) {
+        this.type = 'edit';
+        this.userType = type.toLowerCase();
+        this.user = name;
+    }
+    /**
+     * Handles actions in edit-related messages
+     * @private
+     * @param {String} action Action that happened
+     * @param {String} summary Watched edit summary if there is one
+     * @param {String} create If the watched edit summary was used in creation
+     * @param {String} watchWord Watched creation summary
+     * @returns {String} Action that happened
+     */
+    _handleAction(action, summary, create, watchWord) {
+        switch (action) {
+            case 'edited':
+            case 'Copyvio?':
+            case 'Possible gibberish?':
+            case 'Large removal':
+                return 'edit';
+            case 'created':
+            case 'Tiny create':
+                return 'create';
+            case 'blanked':
+                this.blank = true;
+                return 'edit';
+            default:
+                if (summary) {
+                    this.watched = summary;
+                    return create ? 'create' : 'edit';
+                } else if (watchWord) {
+                    this.watched = watchWord;
+                    return 'create';
+                }
+                this._debug(`
+                    No action recognized!
+                    Action: ${action}
+                    Summary: ${summary}
+                    Create: ${create}
+                    Watch word: ${watchWord}
+                `);
+                return '';
+        }
+    }
+    /**
+     * Handles diff URLs
+     * @private
+     * @param {String} params Query parameters
+     * @returns {Object} Object-ified query parameters
+     */
+    _handleURL(params) {
+        const ret = {};
+        if (params.includes('=')) {
+            params.split('&').forEach(function(p) {
+                const split = p.split('=');
+                ret[split[0]] = split[1];
+            });
+        } else {
+            this.action = 'log';
+            this.log = params.split('/')[1];
+        }
+        return ret;
     }
     /**
      * Handles Discussions events sent in #wikia-discussions channel
-     * @method _handleDiscussions
      * @private
      * @param {Array} res Regular expression execution result
      */
@@ -193,7 +270,6 @@ class Message {
     }
     /**
      * Handles Discussions actions
-     * @method _handleDiscussionsAction
      * @private
      * @param {String} action1 Whole action
      * @param {String} action2 If not a specific case, represents an action
@@ -202,10 +278,10 @@ class Message {
      *                          the target
      */
     _handleDiscussionsAction(action1, action2, action3) {
-        switch(action1) {
+        switch (action1) {
             case 'replied': return ['create', 'reply'];
             case 'reported post': return ['create', 'report'];
-            default: switch(action2) {
+            default: switch (action2) {
                 case 'created': return ['create', action3];
                 case 'deleted': return ['delete', action3];
                 case 'undeleted': return ['undelete', action3];
@@ -216,78 +292,91 @@ class Message {
         }
     }
     /**
-     * Handles some parsing logic in edit-related messages
-     * @method _handleEditBase
+     * Handles possible spam sent in #wikia-spam channel
      * @private
-     * @param {String} type A user's type
-     * @param {String} user User's name
+     * @param {Array} res Regular expression execution result
      */
-    _handleEditBase(type, name) {
-        this.type = 'edit';
-        this.userType = type.toLowerCase();
-        this.user = name;
+    _handleSpam(res) {
+        this.type = 'spam';
+        this.coi = Number(res.shift());
+        const percent = res.shift();
+        this.percent = percent === '!' ?
+            1 : Number(percent);
+        this.coitype = Number(res.shift());
+        this.user = res.shift();
+        this.action = SPAM_ACTIONS[res.shift()];
+        this.wiki = res.shift();
+        this.oldid = Number(res.shift());
+        this.thread = res.shift();
+        this.reply = res.shift();
+        this.talkpage = decodeURIComponent(res.shift());
+        this._handleAdditional(res.shift(), res.shift());
+        const content = res.shift(),
+              filter = res.shift();
+        if (!this.filter && filter && content) {
+            this.content = content;
+            this.filter = Number(filter);
+        }
+        this.mainUser = res.shift();
     }
     /**
-     * Handles actions in edit-related messages
-     * @method _handleAction
-     * @private
-     * @param {String} action Action that happened
-     * @param {String} summary Watched edit summary if there is one
-     * @param {String} create If the watched edit summary was used in creation
-     * @param {String} watchWord Watched creation summary
-     * @return {String} Action that happened
+     * Handles additional content with the spam filter hitting
+     * @param {String} type Type of the additional content
+     * @param {String} content Additional content
      */
-    _handleAction(action, summary, create, watchWord) {
-        switch(action) {
-            case 'edited':
-            case 'Copyvio?':
-            case 'Possible gibberish?':
-            case 'Large removal':
-                return 'edit';
-            case 'created':
-            case 'Tiny create':
-                return 'create';
-            case 'blanked':
-                this.blank = true;
-                return 'edit';
-            default:
-                if(summary) {
-                    this.watched = summary;
-                    return create ? 'create' : 'edit';
-                } else if(watchWord) {
-                    this.watched = watchWord;
-                    return 'create';
+    _handleAdditional(type, content) {
+        switch (type) {
+            case 'with title':
+                this.title = content;
+                break;
+            case 'with URL':
+                this.url = content;
+                break;
+            case 'with summary':
+                this.summary = content;
+                break;
+            case 'matching filter':
+                this.filter = Number(content.substring(1));
+                break;
+            case 'matching criteria:':
+                if (content === 'IP and title equals summary') {
+                    this.xrumer = true;
                 } else {
-                    main.debug(`
-                        No action recognized!
-                        Action: ${action}
-                        Summary: ${summary}
-                        Create: ${create}
-                        Watch word: ${watchWord}
-                    `);
-                    return '';
+                    this._debug(`Unknown criteria: ${content}`);
                 }
+                break;
+            case undefined:
+                break;
+            default:
+                this._debug(`
+                    No additional content recognized!
+                    Additional: ${content}
+                `);
+                break;
         }
     }
     /**
-     * Handles diff URLs
-     * @method _handleURL
+     * Handles new user registration messages
      * @private
-     * @param {String} params Query parameters
-     * @return {Object} Object-ified query parameters
+     * @param {Array} res Regular expression execution result
      */
-    _handleURL(params) {
-        const ret = {};
-        if(params.includes('=')) {
-            params.split('&').forEach(function(p) {
-                const split = p.split('=');
-                ret[split[0]] = split[1];
-            });
-        } else {
-            this.action = 'log';
-            this.log = params.split('/')[1];
-        }
-        return ret;
+    _handleNewusers(res) {
+        this.type = 'newusers';
+        this.user = res.shift();
+        this.wiki = res.shift();
+    }
+    /**
+     * Handles new file upload messages
+     * @private
+     * @param {Array} res Regular expression execution result
+     */
+    _handleUploads(res) {
+        this.type = 'upload';
+        this.reupload = res.shift() === 'reupload';
+        this.user = res.shift();
+        this.wiki = res.shift();
+        this.namespace = res.shift();
+        this.file = res.shift();
     }
 }
 

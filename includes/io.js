@@ -8,16 +8,15 @@
 /**
  * Importing modules
  */
-const http = require('request-promise-native');
+const http = require('request-promise-native'),
+      pkg = require('../package.json');
 
 /**
  * Static class for handling HTTP requests
- * @class IO
  */
 class IO {
     /**
      * Class constructor
-     * @constructor
      * @throws {Error} when called
      */
     constructor() {
@@ -26,21 +25,19 @@ class IO {
     /**
      * Makes a new cookie jar
      * Cookies made separately
-     * @method getNewJar
-     * @return {Object} New cookie jar
      */
     static makeJar() {
         IO.jar = http.jar();
     }
     /**
      * Internal method for handling HTTP requests
-     * @method _request
      * @private
      * @param {String} method If to use GET or POST
      * @param {String} url URL to send the HTTP request to
      * @param {Object} data Data to send in the request
      * @param {Function} transform How to transform the data when receieved
-     * @return {Promise} Promise on which to listen for response
+     * @param {Boolean} body If the data should be in POST body
+     * @returns {Promise} Promise on which to listen for response
      */
     static _request(method, url, data, transform, body) {
         const lol = [
@@ -52,19 +49,21 @@ class IO {
                 'A cube has 6 sides',
                 'Cubes aren\'t Illuminati'
             ],
-            e = process.env,
             options = {
                 headers: {
-                    'User-Agent': `${e.npm_package_name} v${e.npm_package_version} (${e.npm_package_homepage}) [Did you know? ${lol[Math.floor(Math.random() * lol.length)]}]`, // jshint ignore: line
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'User-Agent': `${pkg.name} v${pkg.version} (${pkg.homepage}) [Did you know? ${lol[Math.floor(Math.random() * lol.length)]}]`
                 },
-                method: method,
-                uri: url,
-                json: true,
-                jar: IO.jar
+                jar: IO.jar,
+                // TODO: Hacky
+                json: data !== 'notjson',
+                method,
+                uri: url
             };
-        options[body ? 'body' : 'qs'] = data;
-        if(transform) {
+        if (data) {
+            options[body ? 'body' : 'qs'] = data;
+        }
+        if (transform) {
             options.transform = transform;
         }
         return http(options);
@@ -74,7 +73,7 @@ class IO {
      * @param {String} url URL to send the HTTP request to
      * @param {Object} data Data to send in the request
      * @param {Function} transform How to transform the data when receieved
-     * @return {Promise} Promise on which to listen for response
+     * @returns {Promise} Promise on which to listen for response
      */
     static get(url, data, transform) {
         return IO._request('GET', url, data, transform);
@@ -84,48 +83,49 @@ class IO {
      * @param {String} url URL to send the HTTP request to
      * @param {Object} data Data to send in the request
      * @param {Function} transform How to transform the data when receieved
-     * @return {Promise} Promise on which to listen for response
+     * @param {Boolean} body If the data should be in POST body
+     * @returns {Promise} Promise on which to listen for response
      */
     static post(url, data, transform, body) {
         return IO._request('POST', url, data, transform, body);
     }
     /**
      * Calls the MediaWiki API
-     * @method api
      * @param {String} wiki Wiki to query
      * @param {String} action Action to use
      * @param {Object} options Other data to supply
      * @param {Function} transform How to transform the data when receieved
      * @param {String} method Method to use when communicating with the API.
      *                        Set to GET by default
-     * @return {Promise} Promise on which to listen for response
+     * @returns {Promise} Promise on which to listen for response
      */
     static api(wiki, action, options, transform, method) {
-        if(typeof action !== 'string') {
+        if (typeof action !== 'string') {
             main.hook('error', '`action` parameter invalid', 'IO', 'api');
         }
         options.action = action;
         options.format = 'json';
         return IO._request(
             method || 'GET',
-            `http://${wiki}.wikia.com/api.php`,
+            `https://${wiki}.wikia.com/api.php`,
             options,
             function(data) {
-            // TODO: Improve this
-            if(!data) {
-                main.hook('error', 'MediaWiki API returned no data!');
-            } else if(data.error) {
-                const e = data.error;
-                main.hook('error', `MediaWiki API error: ${e.code}: ${e.info}`);
-                return data[action] ? data[action] : data;
-            } else if (typeof data[action] === 'undefined') {
-                main.hook('error', 'MediaWiki API returned no data!');
-            } else if(typeof transform === 'function') {
-                return transform.call(this, data[action]);
-            } else {
-                return data[action];
+                // TODO: Improve this
+                if (!data) {
+                    main.hook('error', 'API returned no data!');
+                } else if (data.error) {
+                    const e = data.error;
+                    main.hook('error', `API error: ${e.code}: ${e.info}`);
+                    return data[action] ? data[action] : data;
+                } else if (typeof data[action] === 'undefined') {
+                    main.hook('error', 'API returned no data!');
+                } else if (typeof transform === 'function') {
+                    return transform(data[action]);
+                } else {
+                    return data[action];
+                }
             }
-        });
+        );
     }
 }
 
