@@ -130,7 +130,7 @@ class SpamFormat extends Format {
                 return `[${msg.url}](http://${msg.url})`;
             case 5:
                 if (msg.content) {
-                    return `${p}: "${msg.content}" (#${msg.filter})`
+                    return `${p}: "${msg.content}" (#${msg.filter})`;
                 }
                 return `${p}: #${msg.filter}`;
             case 6:
