@@ -129,6 +129,7 @@ It can also contain the following properties:
 | `url`      | String  | URL that was inserted                     | `COI5.4` was hit               |
 | `summary`  | String  | Summary that was used                     | `COI5.3` was hit               |
 | `xrumer`   | Boolean | If XRumer spam (`XRM`) has been detected  | Always                         |
+| `thread`   | Boolean | If thread spam (`THR`) has been detected  | Always                         |
 | `filter`   | Integer | Filter that was hit                       | `coi` is 5                     |
 | `content`  | String  | Content of the filter that was hit        | `coi` is 5                     |
 | `mainUser` | String  | Second user involved in `ANS` spam        | `coi` is 6                     |

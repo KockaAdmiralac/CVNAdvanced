@@ -73,7 +73,9 @@ class SpamFormat extends Format {
         switch (msg.coi) {
             case 1: return msg.xrumer ?
                 'XRumer spam' :
-                'Inserted link matches username';
+                msg.thread ?
+                    'Thread spam' :
+                   'Inserted link matches username';
             case 2: return 'Wiki URL similar to founder';
             case 3: return 'Wiki name similar to founder';
             case 4: return 'Inserted a link to a new wiki too soon';
@@ -101,7 +103,7 @@ class SpamFormat extends Format {
         if (msg.oldid) {
             return `${wiki}/?oldid=${msg.oldid}`;
         } else if (msg.reply) {
-            return `${wiki}/d/p/${msg.thread}/${msg.reply}`;
+            return `${wiki}/d/p/${msg.thread}/r/${msg.reply}`;
         } else if (msg.thread) {
             return `${wiki}/d/p/${msg.thread}`;
         } else if (msg.coi === 6) {
