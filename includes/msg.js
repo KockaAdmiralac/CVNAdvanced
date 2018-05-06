@@ -341,6 +341,8 @@ class Message {
             case 'matching criteria:':
                 if (content === 'IP and title equals summary') {
                     this.xrumer = true;
+                } else if (content === 'user and URL addition to Wall') {
+                    this.thread = true;
                 } else {
                     this._debug(`Unknown criteria: ${content}`);
                 }

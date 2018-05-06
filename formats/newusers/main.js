@@ -24,11 +24,10 @@ const PROPERTY_MAP = {
     fbPage: 'Facebook',
     twitter: 'Twitter',
     bio: 'Bio'
-}, PREFIXES = {
+}, /* eslint-enable */ PREFIXES = {
     fbPage: 'https://facebook.com/',
     twitter: 'https://twitter.com/'
 };
-/* eslint-enable */
 
 /**
  * Main class
@@ -50,7 +49,7 @@ class ExampleFormat extends Format {
         const ret = {
             fields: [],
             title: info.username,
-            url: `https://${wiki}.wikia.com/wiki/Special:Contribs/${user}`
+            url: `${util.wiki(wiki)}/wiki/Special:Contribs/${user}`
         };
         if (info.avatar) {
             ret.image = {
