@@ -136,6 +136,7 @@ It can also contain the following properties:
 
 ### New users
 If the message represents a user that just registered, it will contain the following properties:
+
 | Name   | Type   | Description                                 |
 | ------ | ------ | ------------------------------------------- |
 | `user` | String | Name of the user that registered            |
@@ -143,6 +144,7 @@ If the message represents a user that just registered, it will contain the follo
 
 ### Uploads
 If the message represents a new file being uploaded, it will contain the following properties:
+
 | Name        | Type    | Description                                       |
 | ----------- | ------- | ------------------------------------------------- |
 | `reupload`  | Boolean | `true` if the file has been reuploaded            |
