@@ -49,6 +49,17 @@ class Logging extends Extension {
         }
     }
     /**
+     * Event emitted when another user joins a channel
+     * @private
+     * @param {String} nickname User that joined
+     * @param {String} channel Channel the user joined
+     */
+    _onUserJoin(nickname, channel) {
+        if (channel === this._channel) {
+            this._callWebhook(`${nickname} joined`);
+        }
+    }
+    /**
      * Event emitted when a message is sent outside of regular channels
      * @private
      * @param {String} nickname User sending the message
