@@ -7,6 +7,6 @@
         }
     ],
     "name": "Plain Discussions",
-    "description": "For formatting Discussions posts, but in a similar way to how WikiaActivityLogger does it. Only works on Discord",
+    "description": "For formatting Discussions posts, but in a similar way to how KockaLogger does it. Only works on Discord",
     "version": [1, 0, 0]
 }

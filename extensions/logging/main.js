@@ -44,29 +44,8 @@ class Logging extends Extension {
      * @private
      */
     _onServerJoin() {
-        this._write('JOIN', 'server');
         if (this._channel) {
             main.hook('irc', 'join', this._channel);
-        }
-    }
-    /**
-     * Event called upon joining an IRC channel
-     * @private
-     * @param {String} channel Joined channel
-     */
-    _onChannelJoin(channel) {
-        this._write('JOIN', `channel: ${channel}`);
-    }
-    /**
-     * Event emitted when another user joins a channel
-     * @private
-     * @param {String} nickname User that joined
-     * @param {String} channel Channel the user joined
-     */
-    _onUserJoin(nickname, channel) {
-        this._write('JOIN', `channel: ${channel}, user: ${nickname}`);
-        if (channel === this._channel) {
-            this._callWebhook(`${nickname} joined`);
         }
     }
     /**
@@ -133,12 +112,14 @@ class Logging extends Extension {
               d = this._padNum(date.getUTCDate()),
               m = this._padNum(date.getUTCMonth()) + 1,
               y = this._padNum(date.getUTCFullYear()),
-              str = `[${d}/${m}/${y} ${h}:${mi}:${s}] [${type}]`;
-        this._log.write(`${text
-            .split('\n')
-            .map(line => `${str} ${line}`)
-            .join('\n')
-        }\n`);
+              str = `[${d}/${m}/${y} ${h}:${mi}:${s}] [${type}]`,
+              log = `${text
+                .split('\n')
+                .map(line => `${str} ${line}`)
+                .join('\n')
+              }\n`;
+        this._log.write(log);
+        this._callWebhook(`\`\`\`${log}\`\`\``, 'CVNAdvanced');
     }
     /**
      * Ensures a number string is two spaces wide
@@ -151,14 +132,6 @@ class Logging extends Extension {
             return `0${number}`;
         }
         return String(number);
-    }
-    /**
-     * Event called if an extension doesn't exist
-     * @private
-     * @param {String} extension The extension that doesn't exist
-     */
-    _onNoExtension(extension) {
-        this._write('ERROR', `No extension: ${extension}`);
     }
     /**
      * Event called when a debug is requested
@@ -201,13 +174,6 @@ class Logging extends Extension {
         this._write('NOTICE', `[${nick || 'server'}] ${text}`);
     }
     /**
-     * Event called after all resources have loaded
-     * @private
-     */
-    _onInit() {
-        this._write('LOAD', '');
-    }
-    /**
      * Event called when a user gets kicked from a channel
      * @private
      * @param {String} channel Channel the user got kicked from
@@ -217,9 +183,10 @@ class Logging extends Extension {
      */
     _onKick(channel, nickname, user, reason) {
         const defReason = reason || 'No reason specified';
-        this._write('KICK', `${user} -> ${nickname}: "${defReason}"`);
         if (channel === this._channel) {
             this._callWebhook(`${user} kicked ${nickname} (*${defReason}*)`);
+        } else {
+            this._write('KICK', `${user} -> ${nickname}: "${defReason}"`);
         }
     }
     /**
@@ -231,7 +198,6 @@ class Logging extends Extension {
      */
     _onPart(channel, nickname, reason) {
         const defReason = reason || 'No reason specified';
-        this._write('PART', `${nickname} -> ${channel}: "${defReason}"`);
         if (channel === this._channel) {
             this._callWebhook(`${nickname} left ("${defReason}")`);
         }
@@ -245,7 +211,6 @@ class Logging extends Extension {
      */
     _onQuit(nickname, reason, channels) {
         const defReason = reason || 'No reason specified';
-        this._write('QUIT', `${nickname} ("${defReason}")`);
         if (channels.includes(this._channel)) {
             this._callWebhook(`${nickname} quit ("${defReason}")`);
         }
@@ -255,7 +220,6 @@ class Logging extends Extension {
      */
     kill() {
         if (this._log) {
-            this._write('END', '');
             this._log.end();
         }
     }

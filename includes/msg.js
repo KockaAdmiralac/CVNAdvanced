@@ -17,12 +17,12 @@ const util = require('./util.js');
  */
 /* eslint-disable */
 const REGEX = {
-    discussions: /^\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[(.*)\]\])?(?: \((\d+)\))? https?:\/\/(.+)\.wikia\.com\/d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/,
-    spam: /^COI(\d+) \((\d(?:\.\d{1,2})?|!)(?:, (\d+))?\) \[\[User:([^\]]+)\]\] (created|created wiki|edited) https?:\/\/(.+)\.wikia\.com\/(?:index\.php\?oldid=(\d+)|d\/p\/(\d{19,})(?:\/r\/(\d{19,}))?|Talk:([^\s]+))?(?: (with title|with URL|with title|with summary|matching filter|matching criteria:) ([^,]+)(?:, filter (.+), #(\d+)$|, main page created by \[\[User:([^\]]+)\]\]$)?)?/g,
-    newusers: /^(.*) New user registration https?:\/\/(.*)\.wikia\.com\/wiki\/Special:Log\/newusers - https?:\/\/.*\.wikia\.com\/wiki\/Special:Contributions\/.*/g,
-    uploads: /^New (upload|reupload) \[\[User:([^\]]+)\]\] https?:\/\/(.+)\.wikia\.com\/wiki\/Special:Log\/upload \[\[([^:]+):([^\]]+)\]\]$/g,
-    edit: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked)( watched)? \[\[([^\]]+)\]\] \(([+-\d]+)\) (URL|Diff): https?:\/\/([^\s]+)\.wikia\.com\/(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g,
-    replace: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([+-\d]+)\) Diff: https?:\/\/([^\s]+)\.wikia\.com\/\?([^\s]+)/g,
+    discussions: /^\[\[User:([^\]]+)\]\] (replied|reported post|(created|deleted|undeleted|moved|edited) (thread|report|reply))(?: \[\[(.*)\]\])?(?: \((\d+)\))? https?:\/\/([a-z0-9-.]+)\.(?:wikia|fandom)\.com\/(?:([a-z-]+)\/)?d\/p\/(\d{19})(?:\/r\/(\d{19}))? : (.*)/,
+    spam: /^COI(\d+) \((\d(?:\.\d{1,2})?|!)(?:, (\d+))?\) \[\[User:([^\]]+)\]\] (created|created wiki|edited) https?:\/\/([a-z0-9-.]+)\.(?:wikia|fandom)\.com\/(?:([a-z-]+)\/)?(?:index\.php\?oldid=(\d+)|d\/p\/(\d{19,})(?:\/r\/(\d{19,}))?|Talk:([^\s]+))?(?: (with title|with URL|with title|with summary|matching filter|matching criteria:) ([^,]+)(?:, filter (.+), #(\d+)$|, main page created by \[\[User:([^\]]+)\]\]$)?)?/g,
+    newusers: /^(.*) New user registration https?:\/\/(.*)\.wikia\.com\/wiki\/Special:Log\/newusers - https?:\/\/([a-z0-9-.]+)\.(?:wikia|fandom)\.com\/(?:([a-z-]+)\/)?wiki\/Special:Contributions\/.*/g,
+    uploads: /^New (upload|reupload) \[\[User:([^\]]+)\]\] https?:\/\/([a-z0-9-.]+)\.(?:wikia|fandom)\.com\/(?:([a-z-]+)\/)?wiki\/Special:Log\/upload \[\[([^:]+):([^\]]+)\]\]$/g,
+    edit: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] (edited|created|used edit summary "([^"]+)"( in creating)*|Copyvio\?|Tiny create|Possible gibberish\?|Large removal|create containing watch word "([^"]+)"|blanked)( watched)? \[\[([^\]]+)\]\] \(([+-\d]+)\) (URL|Diff): https?:\/\/([a-z0-9-.]+)\.(?:wikia|fandom)\.com\/(?:([a-z-]+)\/)?(?:index\.php\?|\?|wiki\/)*([^\s]+)(?: (.*))*/g,
+    replace: /^(User|IP|Whitelist|Blacklist|Admin|Greylist) \[\[User:([^\]]+)\]\] replaced \[\[([^\]]+)\]\] with "(.*)" \(([+-\d]+)\) Diff: https?:\/\/([a-z0-9-.]+)\.(?:wikia|fandom)\.com\/(?:([a-z-]+)\/)?\?([^\s]+)/g,
     block: /^(Block|Unblock) [eE]ditor \[\[User:([^\]]+)\]\] (?:blocked|unblocked) by admin \[\[User:([^\]]+)\]\] (?:Length: (.*) )*"([^"]+)"/g,
     // Add proper messages for bna
     list: /^(?:(Added|Updated): )*(.*) is on (global whitelist|global blacklist|global greylist|rc bot list|rc admin list|bad edit summary list|bad new articles list|bad new usernames list), added by (.*) until (.*) \("(.*)"\)$/g,
@@ -306,6 +306,8 @@ class Message {
         this.user = res.shift();
         this.action = SPAM_ACTIONS[res.shift()];
         this.wiki = res.shift();
+        this.isFandom = res.shift() === 'fandom';
+        this.lang = res.shift();
         this.oldid = Number(res.shift());
         this.thread = res.shift();
         this.reply = res.shift();

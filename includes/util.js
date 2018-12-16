@@ -112,14 +112,24 @@ class Util {
             .replace(/%2F/g, '/');
     }
     /**
-     * Gets a URL to a Wikia wiki
+     * Gets a URL to a FANDOM wiki
      * @static
      * @param {String} wiki Subdomain of the wiki
+     * @param {Boolean} isFandom Whether the wiki is on fandom.com
+     * @param {String} lang Language of the wiki in article path
      * @returns {String} Link to the wiki
      */
-    static wiki(wiki) {
-        const w = wiki || 'c';
-        return `${w.includes('.') ? 'http' : 'https'}://${w}.wikia.com`;
+    static wiki(wiki, isFandom, lang) {
+        const w = wiki || 'c',
+              prefix = `${
+                  w.includes('.') ? 'http' : 'https'
+              }://${w}.${
+                  isFandom ? 'fandom' : 'wikia'
+              }.com`;
+        if (lang && lang !== 'en') {
+            return `${prefix}/${lang}`;
+        }
+        return prefix;
     }
 }
 
