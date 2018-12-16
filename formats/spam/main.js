@@ -30,6 +30,13 @@ const COLORS = [
  */
 class SpamFormat extends Format {
     /**
+     * Class constructor
+     */
+    constructor() {
+        super();
+        this._goteem = {};
+    }
+    /**
      * Main class method
      * @param {Transport} transport Transport to pass the message to
      * @param {Message} msg Message to format
@@ -39,15 +46,17 @@ class SpamFormat extends Format {
         if (msg.type !== 'spam' || transport.constructor.name !== 'Discord') {
             return;
         }
+        const goteem = this._goteem[msg.user];
+        this._goteem[msg.user] = true;
         return {
             embeds: [
                 {
                     author: {
-                        name: msg.user,
+                        name: `${msg.user} [${msg.wiki}] ${goteem ? '!URGENT!' : ''}`,
                         url: `${util.wiki(msg.wiki)}/wiki/Special:Contribs/${util.encode(msg.user)}`
                     },
                     color: COLORS[msg.coi] || 0xFFFFFF,
-                    description: this._embedDescription(msg),
+                    description: `${this._embedDescription(msg)}\n\n\`${this._embedReport(msg)}\``,
                     title: this._embedTitle(msg),
                     url: this._embedURL(msg)
                 }
@@ -142,6 +151,21 @@ class SpamFormat extends Format {
             default:
                 return '';
         }
+    }
+    /**
+     * Generates the report syntax after the description
+     * @private
+     * @param {Message} msg Message to take information from
+     * @returns {String} Report string
+     */
+    _embedReport(msg) {
+        if (msg.xrumer) {
+            return `!report x ${msg.wiki}:${msg.user}\n!report s ${msg.wiki} ${msg.user}`;
+        }
+        if (msg.coi === 2 || msg.coi === 3 || msg.coi === 4) {
+            return `!report w ${msg.wiki}`;
+        }
+        return `!report s ${msg.wiki === 'community' ? 'c' : msg.wiki} ${msg.user}`;
     }
 }
 
