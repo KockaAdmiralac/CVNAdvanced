@@ -48,12 +48,13 @@ class SpamFormat extends Format {
         }
         const goteem = this._goteem[msg.user];
         this._goteem[msg.user] = true;
+        this._wiki = util.wiki(msg.wiki, msg.isFandom, msg.lang);
         return {
             embeds: [
                 {
                     author: {
                         name: `${msg.user} [${msg.wiki}] ${goteem ? '!URGENT!' : ''}`,
-                        url: `${util.wiki(msg.wiki)}/wiki/Special:Contribs/${util.encode(msg.user)}`
+                        url: `${this._wiki}/wiki/Special:Contribs/${util.encode(msg.user)}`
                     },
                     color: COLORS[msg.coi] || 0xFFFFFF,
                     description: `${this._embedDescription(msg)}\n\n\`${this._embedReport(msg)}\``,
@@ -70,7 +71,7 @@ class SpamFormat extends Format {
      * @returns {String} URL to user's contributions
      */
     _userURL(wiki, user) {
-        return `${util.wiki(wiki)}/wiki/Special:Contribs/${util.encode(user)}`;
+        return `${this._wiki}/wiki/Special:Contribs/${util.encode(user)}`;
     }
     /**
      * Formats the embed title
@@ -108,17 +109,16 @@ class SpamFormat extends Format {
      * @returns {String} Link to the wiki or oldid of the revision
      */
     _embedURL(msg) {
-        const wiki = util.wiki(msg.wiki);
         if (msg.oldid) {
-            return `${wiki}/?oldid=${msg.oldid}`;
+            return `${this._wiki}/?oldid=${msg.oldid}`;
         } else if (msg.reply) {
-            return `${wiki}/d/p/${msg.thread}/r/${msg.reply}`;
+            return `${this._wiki}/d/p/${msg.thread}/r/${msg.reply}`;
         } else if (msg.thread) {
-            return `${wiki}/d/p/${msg.thread}`;
+            return `${this._wiki}/d/p/${msg.thread}`;
         } else if (msg.coi === 6) {
-            return `${wiki}/wiki/${util.encode(msg.talkpage)}`;
+            return `${this._wiki}/wiki/${util.encode(msg.talkpage)}`;
         }
-        return wiki;
+        return this._wiki;
     }
     /**
      * Generates the embed description
@@ -163,6 +163,12 @@ class SpamFormat extends Format {
             return `!report x ${msg.wiki}:${msg.user}\n!report s ${msg.wiki} ${msg.user}`;
         }
         if (msg.coi === 2 || msg.coi === 3 || msg.coi === 4) {
+            if (msg.isFandom) {
+                if (msg.lang && msg.lang !== 'en') {
+                    return `!report w ${msg.lang}.${msg.wiki}:f`;
+                }
+                return `!report w ${msg.wiki}`;
+            }
             return `!report w ${msg.wiki}`;
         }
         return `!report s ${msg.wiki === 'community' ? 'c' : msg.wiki} ${msg.user}`;
