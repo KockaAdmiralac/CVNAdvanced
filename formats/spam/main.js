@@ -167,7 +167,7 @@ class SpamFormat extends Format {
                 if (msg.lang && msg.lang !== 'en') {
                     return `!report w ${msg.lang}.${msg.wiki}:f`;
                 }
-                return `!report w ${msg.wiki}`;
+                return `!report w ${msg.wiki}:f`;
             }
             return `!report w ${msg.wiki}`;
         }
