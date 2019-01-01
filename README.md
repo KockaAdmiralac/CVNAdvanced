@@ -5,5 +5,4 @@ Documentation on how to use it is in `docs` directory.
 
 Built with Node.js, webhooks, cubes, stars, bricks, duck-penguins, parrots, walruses, parrot-walruses, laundry machines and probably many more I can't remember at this time.
 
-**CVNAdvanced has been deprecated.** Only currently supported functionality is the `#wikia-spam` transport, but that may change in the near future. If you have access to appropriate resources for it, use [KockaLogger](https://github.com/KockaAdmiralac/KockaLogger).
-
+**CVNAdvanced has been deprecated.** Other tools have been made to replace it, such as the WikiaSpam bot in `#wikia-spam` and [KockaLogger](https://github.com/KockaAdmiralac/KockaLogger).
